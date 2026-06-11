@@ -180,7 +180,17 @@ if [ "$DEPLOY_METHOD" = "docker" ]; then
         sudo chmod +x /usr/local/bin/docker-compose
         print_success "docker-compose 已安装"
     else
-        print_success "docker-compose 已安装"
+        # 若只有插件形式 (docker compose)，创建兼容 shim
+        if ! command -v docker-compose &> /dev/null; then
+            sudo tee /usr/local/bin/docker-compose > /dev/null << 'SHIM'
+#!/bin/sh
+exec docker compose "$@"
+SHIM
+            sudo chmod +x /usr/local/bin/docker-compose
+            print_success "docker-compose shim 已创建 (-> docker compose plugin)"
+        else
+            print_success "docker-compose 已安装"
+        fi
     fi
 
     # 使用 systemctl 优先，回退到 service
