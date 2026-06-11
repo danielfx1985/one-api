@@ -110,9 +110,9 @@ if [ -f "$PROJECT_ROOT/.env" ] && command -v docker &> /dev/null; then
 
         if grep -q '^SQL_DSN=.*@tcp([^d][^b]:' "$PROJECT_ROOT/.env" 2>/dev/null || \
            ! grep -q '^SQL_DSN=.*@tcp(db:' "$PROJECT_ROOT/.env" 2>/dev/null; then
-            $DC up -d --no-deps one-api redis 2>/dev/null || $DC up -d
+            $DC up -d --force-recreate --no-deps one-api redis 2>/dev/null || $DC up -d --force-recreate
         else
-            $DC up -d
+            $DC up -d --force-recreate
         fi
 
         print_step "等待服务启动..."

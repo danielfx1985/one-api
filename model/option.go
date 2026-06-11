@@ -1,6 +1,8 @@
 package model
 
 import (
+	"os"
+
 	"github.com/songquanpeng/one-api/common/config"
 	"github.com/songquanpeng/one-api/common/logger"
 	billingratio "github.com/songquanpeng/one-api/relay/billing/ratio"
@@ -238,7 +240,10 @@ func updateOptionMap(key string, value string) (err error) {
 	case "QuotaPerUnit":
 		config.QuotaPerUnit, _ = strconv.ParseFloat(value, 64)
 	case "Theme":
-		config.Theme = value
+		// Env var takes priority: if THEME is explicitly set in environment, ignore DB value
+		if os.Getenv("THEME") == "" {
+			config.Theme = value
+		}
 	}
 	return err
 }
