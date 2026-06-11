@@ -39,8 +39,8 @@ const Dashboard = () => {
   const adminDashboard = async () => {
     const res = await API.get('/api/user/admin/dashboard');
     const { success, data } = res.data;
-    if (success && data) {
-      setRegisterChart(getRegisterChartOption(data));
+    if (success) {
+      setRegisterChart(getRegisterChartOption(data || []));
     }
   };
 

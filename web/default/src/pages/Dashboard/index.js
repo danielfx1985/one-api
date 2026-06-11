@@ -2,6 +2,8 @@ import React, {useEffect, useState} from 'react';
 import {useTranslation} from 'react-i18next';
 import {Card, Grid} from 'semantic-ui-react';
 import {
+  Area,
+  AreaChart,
   Bar,
   BarChart,
   CartesianGrid,
@@ -14,6 +16,7 @@ import {
   YAxis,
 } from 'recharts';
 import axios from 'axios';
+import { isAdmin } from '../../helpers/utils';
 import './Dashboard.css';
 
 // 在 Dashboard 组件内添加自定义配置
@@ -61,10 +64,36 @@ const Dashboard = () => {
     todayQuota: 0,
     todayTokens: 0,
   });
+  const [registerData, setRegisterData] = useState([]);
+  const userIsAdmin = isAdmin();
 
   useEffect(() => {
     fetchDashboardData();
+    if (userIsAdmin) {
+      fetchAdminDashboard();
+    }
   }, []);
+
+  const fetchAdminDashboard = async () => {
+    try {
+      const res = await axios.get('/api/user/admin/dashboard');
+      if (res.data.success) {
+        setRegisterData(buildRegisterSeries(res.data.data || []));
+      }
+    } catch (_) {}
+  };
+
+  const buildRegisterSeries = (raw) => {
+    const map = new Map((raw || []).map((item) => [item.day, item.count]));
+    const result = [];
+    for (let i = 29; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      const day = d.toISOString().slice(0, 10);
+      result.push({ date: day, count: map.get(day) || 0 });
+    }
+    return result;
+  };
 
   const fetchDashboardData = async () => {
     try {
@@ -453,6 +482,57 @@ const Dashboard = () => {
           </div>
         </Card.Content>
       </Card>
+
+      {/* 用户注册趋势（仅管理员可见） */}
+      {userIsAdmin && (
+        <Card fluid className='chart-card'>
+          <Card.Content>
+            <Card.Header>用户注册趋势（近30天）</Card.Header>
+            <div className='chart-container'>
+              <ResponsiveContainer width='100%' height={260}>
+                <AreaChart data={registerData}>
+                  <defs>
+                    <linearGradient id='regGrad' x1='0' y1='0' x2='0' y2='1'>
+                      <stop offset='5%' stopColor='#4318FF' stopOpacity={0.3} />
+                      <stop offset='95%' stopColor='#4318FF' stopOpacity={0.02} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray='3 3' vertical={false} opacity={0.1} />
+                  <XAxis
+                    dataKey='date'
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fontSize: 12, fill: '#A3AED0' }}
+                    tickFormatter={formatDate}
+                    interval={4}
+                  />
+                  <YAxis
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fontSize: 12, fill: '#A3AED0' }}
+                    allowDecimals={false}
+                  />
+                  <Tooltip
+                    contentStyle={{ background: '#fff', border: 'none', borderRadius: '4px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}
+                    formatter={(value) => [value + ' 人', '注册人数']}
+                    labelFormatter={(label) => `日期: ${label}`}
+                  />
+                  <Area
+                    type='monotone'
+                    dataKey='count'
+                    stroke='#4318FF'
+                    strokeWidth={2}
+                    fill='url(#regGrad)'
+                    dot={false}
+                    activeDot={{ r: 4 }}
+                    name='注册人数'
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+          </Card.Content>
+        </Card>
+      )}
     </div>
   );
 };

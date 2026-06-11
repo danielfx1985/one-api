@@ -316,7 +316,7 @@ func GetUserRegistrationsByDay(days int) ([]*UserRegistrationStat, error) {
 		groupSelect = "strftime('%Y-%m-%d', datetime(created_at, 'unixepoch')) as day"
 	}
 
-	var stats []*UserRegistrationStat
+	stats := make([]*UserRegistrationStat, 0)
 	err := DB.Raw(`
 		SELECT `+groupSelect+`, count(1) as count
 		FROM users
