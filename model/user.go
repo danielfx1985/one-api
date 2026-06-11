@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 
 	"gorm.io/gorm"
 
@@ -51,6 +52,7 @@ type User struct {
 	Group            string `json:"group" gorm:"type:varchar(32);default:'default'"`
 	AffCode          string `json:"aff_code" gorm:"type:varchar(32);column:aff_code;uniqueIndex"`
 	InviterId        int    `json:"inviter_id" gorm:"type:int;column:inviter_id;index"`
+	CreatedAt        int64  `json:"created_at" gorm:"bigint;autoCreateTime"`
 }
 
 func GetMaxUserId() int {
@@ -295,6 +297,35 @@ func IsOidcIdAlreadyTaken(oidcId string) bool {
 
 func IsUsernameAlreadyTaken(username string) bool {
 	return DB.Where("username = ?", username).Find(&User{}).RowsAffected == 1
+}
+
+type UserRegistrationStat struct {
+	Day   string `json:"day"`
+	Count int    `json:"count"`
+}
+
+func GetUserRegistrationsByDay(days int) ([]*UserRegistrationStat, error) {
+	now := time.Now()
+	start := now.AddDate(0, 0, -(days - 1)).Truncate(24 * time.Hour).Unix()
+
+	groupSelect := "DATE_FORMAT(FROM_UNIXTIME(created_at), '%Y-%m-%d') as day"
+	if common.UsingPostgreSQL {
+		groupSelect = "TO_CHAR(date_trunc('day', to_timestamp(created_at)), 'YYYY-MM-DD') as day"
+	}
+	if common.UsingSQLite {
+		groupSelect = "strftime('%Y-%m-%d', datetime(created_at, 'unixepoch')) as day"
+	}
+
+	var stats []*UserRegistrationStat
+	err := DB.Raw(`
+		SELECT `+groupSelect+`, count(1) as count
+		FROM users
+		WHERE created_at >= ?
+		AND status != ?
+		GROUP BY day
+		ORDER BY day
+	`, start, UserStatusDeleted).Scan(&stats).Error
+	return stats, err
 }
 
 func ResetUserPasswordByEmail(email string, password string) error {

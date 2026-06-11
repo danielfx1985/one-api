@@ -60,6 +60,7 @@ func SetApiRouter(router *gin.Engine) {
 				adminRoute.POST("/manage", controller.ManageUser)
 				adminRoute.PUT("/", controller.UpdateUser)
 				adminRoute.DELETE("/:id", controller.DeleteUser)
+				adminRoute.GET("/admin/dashboard", controller.GetAdminDashboard)
 			}
 		}
 		optionRoute := apiRouter.Group("/option")

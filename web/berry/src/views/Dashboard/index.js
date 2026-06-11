@@ -3,9 +3,10 @@ import { Grid, Typography } from '@mui/material';
 import { gridSpacing } from 'store/constant';
 import StatisticalLineChartCard from './component/StatisticalLineChartCard';
 import StatisticalBarChart from './component/StatisticalBarChart';
+import UserRegisterChart from './component/UserRegisterChart';
 import { generateChartOptions, getLastSevenDays } from 'utils/chart';
 import { API } from 'utils/api';
-import { showError, calculateQuota, renderNumber } from 'utils/common';
+import { showError, calculateQuota, renderNumber, isAdmin } from 'utils/common';
 import UserCard from 'ui-component/cards/UserCard';
 
 const Dashboard = () => {
@@ -15,6 +16,8 @@ const Dashboard = () => {
   const [quotaChart, setQuotaChart] = useState(null);
   const [tokenChart, setTokenChart] = useState(null);
   const [users, setUsers] = useState([]);
+  const [registerChart, setRegisterChart] = useState(null);
+  const userIsAdmin = isAdmin();
 
   const userDashboard = async () => {
     const res = await API.get('/api/user/dashboard');
@@ -33,6 +36,14 @@ const Dashboard = () => {
     setLoading(false);
   };
 
+  const adminDashboard = async () => {
+    const res = await API.get('/api/user/admin/dashboard');
+    const { success, data } = res.data;
+    if (success && data) {
+      setRegisterChart(getRegisterChartOption(data));
+    }
+  };
+
   const loadUser = async () => {
     let res = await API.get(`/api/user/self`);
     const { success, message, data } = res.data;
@@ -46,6 +57,9 @@ const Dashboard = () => {
   useEffect(() => {
     userDashboard();
     loadUser();
+    if (userIsAdmin) {
+      adminDashboard();
+    }
   }, []);
 
   return (
@@ -109,6 +123,11 @@ const Dashboard = () => {
           </Grid>
         </Grid>
       </Grid>
+      {userIsAdmin && (
+        <Grid item xs={12}>
+          <UserRegisterChart isLoading={isLoading} chartData={registerChart} />
+        </Grid>
+      )}
     </Grid>
   );
 };
@@ -215,4 +234,37 @@ function getLineCardOption(lineDataGroup, field) {
   }
 
   return { chartData: chartData, todayValue: todayValue };
+}
+
+function getRegisterChartOption(data) {
+  const dateMap = new Map(data.map((item) => [item.day, item.count]));
+  const dates = [];
+  const counts = [];
+  for (let i = 29; i >= 0; i--) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    const day = d.toISOString().slice(0, 10);
+    dates.push(day);
+    counts.push(dateMap.get(day) || 0);
+  }
+  return {
+    height: 320,
+    type: 'area',
+    series: [{ name: '注册人数', data: counts }],
+    options: {
+      chart: { toolbar: { show: false }, zoom: { enabled: false } },
+      dataLabels: { enabled: false },
+      stroke: { curve: 'smooth', width: 2 },
+      colors: ['#4318FF'],
+      fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.4, opacityTo: 0.05 } },
+      xaxis: {
+        categories: dates,
+        labels: { rotate: -45, style: { fontSize: '11px' } },
+        tickAmount: 10
+      },
+      yaxis: { min: 0, labels: { formatter: (v) => Math.floor(v) } },
+      tooltip: { theme: 'dark', x: { format: 'yyyy-MM-dd' }, y: { formatter: (v) => v + ' 人' } },
+      grid: { borderColor: '#e0e0e0' }
+    }
+  };
 }
