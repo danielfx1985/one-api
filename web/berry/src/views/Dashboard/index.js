@@ -37,10 +37,16 @@ const Dashboard = () => {
   };
 
   const adminDashboard = async () => {
-    const res = await API.get('/api/user/admin/dashboard');
-    const { success, data } = res.data;
-    if (success) {
-      setRegisterChart(getRegisterChartOption(data || []));
+    try {
+      const res = await API.get('/api/user/admin/dashboard');
+      const { success, message, data } = res.data;
+      if (success) {
+        setRegisterChart(getRegisterChartOption(data || []));
+      } else {
+        showError(message || '获取注册统计失败');
+      }
+    } catch (e) {
+      showError('获取注册统计失败: ' + e.message);
     }
   };
 

@@ -21,7 +21,7 @@ const UserRegisterChart = ({ isLoading, chartData }) => {
               </Grid>
             </Grid>
             <Grid item xs={12}>
-              {chartData?.series?.[0]?.data?.length > 0 ? (
+              {chartData?.series?.[0]?.data?.some((v) => v > 0) ? (
                 <Chart {...chartData} />
               ) : (
                 <Box sx={{ minHeight: '300px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>

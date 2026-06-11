@@ -145,6 +145,9 @@ func migrateDB() error {
 	if err = DB.AutoMigrate(&User{}); err != nil {
 		return err
 	}
+	// Backfill created_at for existing users that have it as 0
+	now := time.Now().Unix()
+	DB.Model(&User{}).Where("created_at = 0").Update("created_at", now)
 	if err = DB.AutoMigrate(&Option{}); err != nil {
 		return err
 	}
