@@ -136,10 +136,37 @@ if [ "$DEPLOY_METHOD" = "docker" ]; then
 
     collect_mysql_config
 
+    # 安装 Docker（按发行版选择方法）
+    install_docker() {
+        local ID=""
+        [ -f /etc/os-release ] && . /etc/os-release
+        case "$ID" in
+            ubuntu|debian|linuxmint)
+                sudo apt-get update -y
+                sudo apt-get install -y ca-certificates curl gnupg
+                sudo install -m 0755 -d /etc/apt/keyrings
+                curl -fsSL https://download.docker.com/linux/${ID}/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+                echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/${ID} $(lsb_release -cs) stable" \
+                    | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+                sudo apt-get update -y
+                sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-compose-plugin
+                ;;
+            centos|rhel|fedora|alinux|alios|anolis|rocky|almalinux|ol)
+                sudo yum install -y yum-utils
+                sudo yum-config-manager --add-repo https://mirrors.aliyun.com/docker-ce/linux/centos/docker-ce.repo
+                sudo yum install -y docker-ce docker-ce-cli containerd.io docker-compose-plugin
+                ;;
+            *)
+                print_warning "未知发行版 '$ID'，尝试通用安装脚本..."
+                curl -fsSL https://get.docker.com | sudo sh
+                ;;
+        esac
+    }
+
     # 检查 Docker
     if ! command -v docker &> /dev/null; then
         print_warning "Docker 未安装，开始安装..."
-        curl -fsSL https://get.docker.com | sudo sh
+        install_docker
         sudo usermod -aG docker $USER
         print_success "Docker 已安装，请重新登录生效"
     else
