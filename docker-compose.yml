@@ -17,7 +17,7 @@ services:
       - REDIS_CONN_STRING=redis://redis
       - SESSION_SECRET=${SESSION_SECRET:-random_string}
       - TZ=Asia/Shanghai
-      - THEME=${THEME:-berry}
+      - THEME=${THEME:-default}
     depends_on:
       - redis
       - db

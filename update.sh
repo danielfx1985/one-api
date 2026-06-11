@@ -75,16 +75,6 @@ fi
 # 清理备份
 rm -rf "$BACKUP_DIR"
 
-# 确保 .env 中 THEME=berry（更新后自动切换为 berry 主题）
-if [ -f "$PROJECT_ROOT/.env" ]; then
-    if grep -q "^THEME=" "$PROJECT_ROOT/.env"; then
-        sed -i 's/^THEME=.*/THEME=berry/' "$PROJECT_ROOT/.env"
-    else
-        echo "THEME=berry" >> "$PROJECT_ROOT/.env"
-    fi
-    print_success "主题已设置为 berry"
-fi
-
 # 若存在 .env 则重启容器
 if [ -f "$PROJECT_ROOT/.env" ] && command -v docker &> /dev/null; then
     echo ""
