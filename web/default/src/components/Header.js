@@ -19,6 +19,7 @@ import {
   isRoot,
   isMobile,
   showSuccess,
+  showError,
 } from '../helpers';
 import '../index.css';
 
@@ -151,6 +152,22 @@ const Header = () => {
     i18n.changeLanguage(language);
   };
 
+  const themeOptions = [
+    { key: 'berry', text: 'Berry', value: 'berry', icon: 'star' },
+    { key: 'default', text: 'Default', value: 'default', icon: 'theme' },
+    { key: 'air', text: 'Air', value: 'air', icon: 'wind' },
+  ];
+
+  const switchTheme = async (newTheme) => {
+    const res = await API.put('/api/option/', { key: 'Theme', value: newTheme });
+    if (res?.data?.success) {
+      showSuccess(`主题已切换为 ${newTheme}，正在刷新...`);
+      setTimeout(() => window.location.reload(), 800);
+    } else {
+      showError(res?.data?.message || '切换主题失败');
+    }
+  };
+
   if (isMobile()) {
     return (
       <>
@@ -206,6 +223,16 @@ const Header = () => {
                   onChange={(_, { value }) => changeLanguage(value)}
                 />
               </Menu.Item>
+              {isRoot() && (
+                <Menu.Item>
+                  <Dropdown
+                    selection
+                    trigger={<Icon name='paint brush' style={{ margin: 0, fontSize: '18px' }} />}
+                    options={themeOptions}
+                    onChange={(_, { value }) => switchTheme(value)}
+                  />
+                </Menu.Item>
+              )}
               <Menu.Item>
                 {userState.user ? (
                   <Button onClick={logout} style={{ color: '#666666' }}>
@@ -287,6 +314,15 @@ const Header = () => {
                 padding: '0 10px',
               }}
             />
+            {isRoot() && (
+              <Dropdown
+                item
+                trigger={<Icon name='paint brush' style={{ margin: 0, fontSize: '18px' }} />}
+                options={themeOptions}
+                onChange={(_, { value }) => switchTheme(value)}
+                style={{ fontSize: '16px', fontWeight: '400', color: '#666', padding: '0 10px' }}
+              />
+            )}
             {userState.user ? (
               <Dropdown
                 text={userState.user.username}
