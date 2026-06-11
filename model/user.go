@@ -316,23 +316,16 @@ func GetUserRegistrationsByDay(days int) ([]*UserRegistrationStat, error) {
 		groupSelect = "strftime('%Y-%m-%d', datetime(created_at, 'unixepoch')) as day"
 	}
 
-	// Exclude batch-set timestamps (backfill artifacts where many users share the exact same second)
-	batchExclude := "AND created_at NOT IN (SELECT batch_ts FROM (SELECT created_at AS batch_ts FROM users WHERE created_at IS NOT NULL GROUP BY created_at HAVING COUNT(*) > 50) AS batch_filter)"
-	if common.UsingPostgreSQL || common.UsingSQLite {
-		batchExclude = "AND created_at NOT IN (SELECT created_at FROM users WHERE created_at IS NOT NULL GROUP BY created_at HAVING COUNT(*) > 50)"
-	}
-
 	stats := make([]*UserRegistrationStat, 0)
-	err := DB.Raw(`
+	err := LOG_DB.Raw(`
 		SELECT `+groupSelect+`, count(1) as count
-		FROM users
-		WHERE created_at IS NOT NULL
+		FROM logs
+		WHERE type = ?
+		AND content LIKE '新用户注册赠送%'
 		AND created_at >= ?
-		AND status != ?
-		`+batchExclude+`
 		GROUP BY day
 		ORDER BY day
-	`, start, UserStatusDeleted).Scan(&stats).Error
+	`, LogTypeSystem, start).Scan(&stats).Error
 	return stats, err
 }
 
