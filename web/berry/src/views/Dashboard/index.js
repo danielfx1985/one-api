@@ -249,7 +249,9 @@ function getRegisterChartOption(data) {
   for (let i = 29; i >= 0; i--) {
     const d = new Date();
     d.setDate(d.getDate() - i);
-    const day = d.toISOString().slice(0, 10);
+    // Use local date to match MySQL server timezone (not UTC)
+    const pad = (n) => String(n).padStart(2, '0');
+    const day = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
     dates.push(day);
     counts.push(dateMap.get(day) || 0);
   }
@@ -265,11 +267,11 @@ function getRegisterChartOption(data) {
       fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.4, opacityTo: 0.05 } },
       xaxis: {
         categories: dates,
-        labels: { rotate: -45, style: { fontSize: '11px' } },
-        tickAmount: 10
+        labels: { rotate: -45, style: { fontSize: '10px' }, hideOverlappingLabels: false },
+        tickPlacement: 'on'
       },
-      yaxis: { min: 0, labels: { formatter: (v) => Math.floor(v) } },
-      tooltip: { theme: 'dark', x: { format: 'yyyy-MM-dd' }, y: { formatter: (v) => v + ' 人' } },
+      yaxis: { min: 0, tickAmount: 4, labels: { formatter: (v) => Math.floor(v) } },
+      tooltip: { theme: 'dark', x: { formatter: (_, { dataPointIndex }) => dates[dataPointIndex] }, y: { formatter: (v) => v + ' 人' } },
       grid: { borderColor: '#e0e0e0' }
     }
   };
