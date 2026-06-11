@@ -147,7 +147,12 @@ func migrateDB() error {
 	}
 	// Backfill created_at for existing users that have it as 0
 	now := time.Now().Unix()
-	DB.Model(&User{}).Where("created_at = 0").Update("created_at", now)
+	result := DB.Exec("UPDATE users SET created_at = ? WHERE created_at = 0", now)
+	if result.Error != nil {
+		logger.SysError("failed to backfill user created_at: " + result.Error.Error())
+	} else if result.RowsAffected > 0 {
+		logger.SysLog(fmt.Sprintf("backfilled created_at for %d existing users", result.RowsAffected))
+	}
 	if err = DB.AutoMigrate(&Option{}); err != nil {
 		return err
 	}
