@@ -320,7 +320,8 @@ func GetUserRegistrationsByDay(days int) ([]*UserRegistrationStat, error) {
 	err := DB.Raw(`
 		SELECT `+groupSelect+`, count(1) as count
 		FROM users
-		WHERE created_at >= ?
+		WHERE created_at IS NOT NULL
+		AND created_at >= ?
 		AND status != ?
 		GROUP BY day
 		ORDER BY day
