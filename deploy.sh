@@ -139,25 +139,31 @@ if [ "$DEPLOY_METHOD" = "docker" ]; then
     # 检查 Docker
     if ! command -v docker &> /dev/null; then
         print_warning "Docker 未安装，开始安装..."
-        sudo apt update
-        sudo apt install -y docker.io
-        sudo service docker start
+        curl -fsSL https://get.docker.com | sudo sh
         sudo usermod -aG docker $USER
         print_success "Docker 已安装，请重新登录生效"
     else
         print_success "Docker 已安装"
     fi
 
-    if ! command -v docker-compose &> /dev/null; then
+    if ! command -v docker-compose &> /dev/null && ! docker compose version &> /dev/null 2>&1; then
         print_warning "docker-compose 未安装，开始安装..."
-        sudo apt install -y docker-compose
+        COMPOSE_VERSION=$(curl -s https://api.github.com/repos/docker/compose/releases/latest | grep '"tag_name"' | cut -d'"' -f4)
+        sudo curl -L "https://github.com/docker/compose/releases/download/${COMPOSE_VERSION}/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+        sudo chmod +x /usr/local/bin/docker-compose
         print_success "docker-compose 已安装"
     else
         print_success "docker-compose 已安装"
     fi
 
+    # 使用 systemctl 优先，回退到 service
     print_step "启动 Docker 服务..."
-    sudo service docker start || true
+    if command -v systemctl &> /dev/null; then
+        sudo systemctl enable docker 2>/dev/null || true
+        sudo systemctl start docker || true
+    else
+        sudo service docker start || true
+    fi
 
     if [ ! -f "docker-compose.yml" ]; then
         print_error "未找到 docker-compose.yml 文件"
@@ -246,8 +252,10 @@ elif [ "$DEPLOY_METHOD" = "local" ]; then
     # 检查 Node.js
     if ! command -v node &> /dev/null; then
         print_warning "Node.js 未安装，开始安装..."
-        curl -fsSL https://deb.nodesource.com/setup_16.x | sudo -E bash -
-        sudo apt install -y nodejs
+        curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
+        export NVM_DIR="$HOME/.nvm"
+        [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+        nvm install 18 && nvm use 18
         print_success "Node.js 已安装"
     else
         print_success "Node.js 已安装: $(node --version)"
