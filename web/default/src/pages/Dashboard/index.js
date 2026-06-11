@@ -120,7 +120,9 @@ const Dashboard = () => {
       return;
     }
 
-    const today = new Date().toISOString().split('T')[0];
+    const pad = (n) => String(n).padStart(2, '0');
+    const now = new Date();
+    const today = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
     const todayData = dashboardData.filter((item) => item.Day === today);
 
     const summary = {
@@ -158,9 +160,13 @@ const Dashboard = () => {
       minDate = sevenDaysAgo;
     }
 
-    // 生成所有日期
+    // 生成所有日期 (use local date to match MySQL server timezone)
+    const localDateStr = (d) => {
+      const pad = (n) => String(n).padStart(2, '0');
+      return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+    };
     for (let d = new Date(minDate); d <= maxDate; d.setDate(d.getDate() + 1)) {
-      const dateStr = d.toISOString().split('T')[0];
+      const dateStr = localDateStr(d);
       dailyData[dateStr] = {
         date: dateStr,
         requests: 0,
@@ -171,6 +177,7 @@ const Dashboard = () => {
 
     // 填充实际数据
     data.forEach((item) => {
+      if (!dailyData[item.Day]) return;
       dailyData[item.Day].requests += item.RequestCount;
       dailyData[item.Day].quota += item.Quota / 1000000;
       dailyData[item.Day].tokens += item.PromptTokens + item.CompletionTokens;
@@ -200,9 +207,13 @@ const Dashboard = () => {
       minDate = sevenDaysAgo;
     }
 
-    // 生成所有日期
+    // 生成所有日期 (use local date to match MySQL server timezone)
+    const localDateStr2 = (d) => {
+      const pad = (n) => String(n).padStart(2, '0');
+      return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+    };
     for (let d = new Date(minDate); d <= maxDate; d.setDate(d.getDate() + 1)) {
-      const dateStr = d.toISOString().split('T')[0];
+      const dateStr = localDateStr2(d);
       timeData[dateStr] = {
         date: dateStr,
       };
@@ -216,6 +227,7 @@ const Dashboard = () => {
 
     // 填充实际数据
     data.forEach((item) => {
+      if (!timeData[item.Day]) return;
       timeData[item.Day][item.ModelName] =
         item.PromptTokens + item.CompletionTokens;
     });
