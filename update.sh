@@ -75,6 +75,11 @@ fi
 # 清理备份
 rm -rf "$BACKUP_DIR"
 
+# 清理 .env 中可能遗留的 THEME 强制设置（让主题由代码默认值决定）
+if [ -f "$PROJECT_ROOT/.env" ]; then
+    sed -i '/^THEME=/d' "$PROJECT_ROOT/.env"
+fi
+
 # 若存在 .env 则重启容器
 if [ -f "$PROJECT_ROOT/.env" ] && command -v docker &> /dev/null; then
     echo ""
