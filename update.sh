@@ -104,12 +104,14 @@ if [ -f "$PROJECT_ROOT/.env" ] && command -v docker &> /dev/null; then
         fi
 
         # 判断是否使用外部 MySQL（外部模式不重启 db 容器）
+        print_step "重新构建镜像（含最新代码）..."
+        $DC build --no-cache one-api
+        print_success "镜像构建完成"
+
         if grep -q '^SQL_DSN=.*@tcp([^d][^b]:' "$PROJECT_ROOT/.env" 2>/dev/null || \
            ! grep -q '^SQL_DSN=.*@tcp(db:' "$PROJECT_ROOT/.env" 2>/dev/null; then
-            $DC pull one-api redis 2>/dev/null || $DC pull
             $DC up -d --no-deps one-api redis 2>/dev/null || $DC up -d
         else
-            $DC pull
             $DC up -d
         fi
 

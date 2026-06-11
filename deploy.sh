@@ -222,16 +222,18 @@ SESSION_SECRET=${SESSION_SECRET}
 EOF
     print_success ".env 配置文件已生成"
 
+    print_step "构建镜像（含源码编译，首次约需 5-10 分钟）..."
+    docker-compose build --no-cache one-api
+    print_success "镜像构建完成"
+
     print_step "启动服务容器..."
     if [ "$MYSQL_MODE" = "external" ]; then
         # 外部 MySQL：仅启动 one-api 和 redis，跳过内置 db 容器
         docker-compose down || true
-        docker-compose pull one-api redis
         docker-compose up -d --no-deps one-api redis
     else
         # 内置 MySQL：启动全部服务
         docker-compose down -v || true
-        docker-compose pull
         docker-compose up -d
     fi
 
