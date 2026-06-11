@@ -145,14 +145,6 @@ func migrateDB() error {
 	if err = DB.AutoMigrate(&User{}); err != nil {
 		return err
 	}
-	// Backfill created_at for existing users — new nullable column defaults to NULL, not 0
-	now := time.Now().Unix()
-	result := DB.Exec("UPDATE users SET created_at = ? WHERE created_at IS NULL OR created_at = 0", now)
-	if result.Error != nil {
-		logger.SysError("failed to backfill user created_at: " + result.Error.Error())
-	} else if result.RowsAffected > 0 {
-		logger.SysLog(fmt.Sprintf("backfilled created_at for %d existing users", result.RowsAffected))
-	}
 	if err = DB.AutoMigrate(&Option{}); err != nil {
 		return err
 	}
