@@ -16,6 +16,7 @@ import {
   getLogo,
   getSystemName,
   isAdmin,
+  isRoot,
   isMobile,
   showSuccess,
 } from '../helpers';
@@ -33,6 +34,7 @@ let headerButtons = [
     name: 'header.token',
     to: '/token',
     icon: 'key',
+    root: true,
   },
   {
     name: 'header.redemption',
@@ -106,6 +108,7 @@ const Header = () => {
   const renderButtons = (isMobile) => {
     return headerButtons.map((button) => {
       if (button.admin && !isAdmin()) return <></>;
+      if (button.root && !isRoot()) return <></>;
       if (isMobile) {
         return (
           <Menu.Item

@@ -85,7 +85,7 @@ func SetApiRouter(router *gin.Engine) {
 			channelRoute.DELETE("/:id", controller.DeleteChannel)
 		}
 		tokenRoute := apiRouter.Group("/token")
-		tokenRoute.Use(middleware.UserAuth())
+		tokenRoute.Use(middleware.RootAuth())
 		{
 			tokenRoute.GET("/", controller.GetAllTokens)
 			tokenRoute.GET("/search", controller.SearchTokens)
