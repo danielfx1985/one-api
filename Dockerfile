@@ -2,25 +2,7 @@ FROM --platform=$BUILDPLATFORM node:16 AS builder
 
 WORKDIR /web
 COPY ./VERSION .
-COPY ./web .
-
-RUN echo "Installing /web/berry..." && \
-    npm install --prefix /web/berry && \
-    echo "Berry dependencies installed"
-
-RUN echo "Building /web/berry..." && \
-    DISABLE_ESLINT_PLUGIN='true' REACT_APP_VERSION=$(cat ./VERSION) npm run build --prefix /web/berry && \
-    rm -rf /web/berry/node_modules && \
-    echo "Berry build completed successfully"
-
-RUN echo "Installing /web/default..." && \
-    npm install --prefix /web/default && \
-    echo "Default dependencies installed"
-
-RUN echo "Building /web/default..." && \
-    DISABLE_ESLINT_PLUGIN='true' REACT_APP_VERSION=$(cat ./VERSION) npm run build --prefix /web/default && \
-    rm -rf /web/default/node_modules && \
-    echo "Default build completed successfully"
+COPY ./web/build ./build
 
 FROM golang:alpine AS builder2
 
