@@ -67,12 +67,16 @@ const Dashboard = () => {
   const [registerData, setRegisterData] = useState([]);
   const [registerDays, setRegisterDays] = useState(30);
   const [registerLoading, setRegisterLoading] = useState(false);
+  const [tokenRanking, setTokenRanking] = useState([]);
+  const [tokenRankingDays, setTokenRankingDays] = useState(30);
+  const [tokenRankingLoading, setTokenRankingLoading] = useState(false);
   const userIsAdmin = isAdmin();
 
   useEffect(() => {
     fetchDashboardData();
     if (userIsAdmin) {
       fetchAdminDashboard(30);
+      fetchTokenRanking(30);
     }
   }, []);
 
@@ -90,6 +94,29 @@ const Dashboard = () => {
   const handleRegisterDaysChange = (days) => {
     setRegisterDays(days);
     fetchAdminDashboard(days);
+  };
+
+  const fetchTokenRanking = async (days = 30) => {
+    setTokenRankingLoading(true);
+    try {
+      const res = await axios.get(`/api/user/admin/token-ranking?days=${days}&limit=20`);
+      if (res.data.success) {
+        setTokenRanking(res.data.data || []);
+      }
+    } catch (_) {}
+    setTokenRankingLoading(false);
+  };
+
+  const handleTokenRankingDaysChange = (days) => {
+    setTokenRankingDays(days);
+    fetchTokenRanking(days);
+  };
+
+  const formatTokens = (n) => {
+    if (n >= 1e9) return (n / 1e9).toFixed(2) + ' B';
+    if (n >= 1e6) return (n / 1e6).toFixed(2) + ' M';
+    if (n >= 1e3) return (n / 1e3).toFixed(1) + ' K';
+    return String(n);
   };
 
   const buildRegisterSeries = (raw, days = 30) => {
@@ -578,6 +605,98 @@ const Dashboard = () => {
                   />
                 </AreaChart>
               </ResponsiveContainer>
+              )}
+            </div>
+          </Card.Content>
+        </Card>
+      )}
+
+      {/* Token 用量排行（仅管理员可见） */}
+      {userIsAdmin && (
+        <Card fluid className='chart-card'>
+          <Card.Content>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
+              <Card.Header>Token 用量排行</Card.Header>
+              <div style={{ display: 'flex', gap: '4px' }}>
+                {[7, 30, 180].map((d) => (
+                  <button
+                    key={d}
+                    onClick={() => handleTokenRankingDaysChange(d)}
+                    style={{
+                      padding: '4px 10px',
+                      fontSize: '12px',
+                      border: '1px solid',
+                      borderRadius: '6px',
+                      cursor: 'pointer',
+                      borderColor: tokenRankingDays === d ? '#4318FF' : '#e2e8f0',
+                      background: tokenRankingDays === d ? '#4318FF' : '#fff',
+                      color: tokenRankingDays === d ? '#fff' : '#4a5568',
+                      fontWeight: tokenRankingDays === d ? 600 : 400,
+                      transition: 'all 0.15s',
+                    }}
+                  >
+                    {d === 180 ? '近半年' : `近${d}天`}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div style={{ marginTop: '12px' }}>
+              {tokenRankingLoading ? (
+                <div style={{ minHeight: '160px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#A3AED0' }}>加载中...</div>
+              ) : tokenRanking.length === 0 ? (
+                <div style={{ minHeight: '160px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#A3AED0' }}>暂无数据</div>
+              ) : (
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px' }}>
+                  <thead>
+                    <tr style={{ borderBottom: '2px solid #f0f0f0' }}>
+                      <th style={{ textAlign: 'left', padding: '8px 4px', width: 48, color: '#2B3674', fontWeight: 600 }}>排名</th>
+                      <th style={{ textAlign: 'left', padding: '8px 4px', color: '#2B3674', fontWeight: 600 }}>用户名</th>
+                      <th style={{ textAlign: 'right', padding: '8px 4px', color: '#2B3674', fontWeight: 600 }}>Token 用量</th>
+                      <th style={{ textAlign: 'left', padding: '8px 12px', color: '#2B3674', fontWeight: 600, minWidth: 140 }}>占比</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {tokenRanking.map((row, idx) => {
+                      const maxT = tokenRanking[0].total_tokens || 1;
+                      const pct = Math.round((row.total_tokens / maxT) * 100);
+                      const rankColors = ['#FFD700', '#C0C0C0', '#CD7F32'];
+                      return (
+                        <tr key={row.username} style={{ borderBottom: '1px solid #f7f7f7' }}>
+                          <td style={{ padding: '10px 4px' }}>
+                            {idx < 3 ? (
+                              <span style={{
+                                display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                                width: 22, height: 22, borderRadius: '50%',
+                                background: rankColors[idx], color: '#fff',
+                                fontSize: '11px', fontWeight: 700
+                              }}>{idx + 1}</span>
+                            ) : (
+                              <span style={{ color: '#A3AED0', paddingLeft: 4 }}>{idx + 1}</span>
+                            )}
+                          </td>
+                          <td style={{ padding: '10px 4px' }}>
+                            <span style={{
+                              display: 'inline-block', padding: '2px 10px',
+                              borderRadius: '12px', border: '1px solid #e2e8f0',
+                              fontSize: '13px', color: '#2B3674'
+                            }}>{row.username}</span>
+                          </td>
+                          <td style={{ padding: '10px 4px', textAlign: 'right', fontWeight: 600, color: '#2B3674' }}>
+                            {formatTokens(row.total_tokens)}
+                          </td>
+                          <td style={{ padding: '10px 12px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                              <div style={{ flex: 1, height: 8, borderRadius: 4, background: '#f0f0f0', overflow: 'hidden' }}>
+                                <div style={{ width: `${pct}%`, height: '100%', borderRadius: 4, background: 'linear-gradient(90deg, #4318FF, #868CFF)' }} />
+                              </div>
+                              <span style={{ fontSize: '12px', color: '#A3AED0', minWidth: 34 }}>{pct}%</span>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
               )}
             </div>
           </Card.Content>

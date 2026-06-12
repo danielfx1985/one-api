@@ -815,6 +815,35 @@ func AdminTopUp(c *gin.Context) {
 	return
 }
 
+func GetTokenUsageRanking(c *gin.Context) {
+	days := 30
+	if daysStr := c.Query("days"); daysStr != "" {
+		if d, err := strconv.Atoi(daysStr); err == nil && d > 0 && d <= 365 {
+			days = d
+		}
+	}
+	limit := 20
+	if limitStr := c.Query("limit"); limitStr != "" {
+		if l, err := strconv.Atoi(limitStr); err == nil && l > 0 && l <= 100 {
+			limit = l
+		}
+	}
+	stats, err := model.GetTokenUsageRanking(days, limit)
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{
+			"success": false,
+			"message": "无法获取 Token 用量排行",
+			"data":    nil,
+		})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"message": "",
+		"data":    stats,
+	})
+}
+
 func GetAdminDashboard(c *gin.Context) {
 	days := 30
 	if daysStr := c.Query("days"); daysStr != "" {

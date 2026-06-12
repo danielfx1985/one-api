@@ -3,6 +3,7 @@ package model
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"gorm.io/gorm"
 
@@ -248,4 +249,35 @@ func SearchLogsByDayAndModel(userId, start, end int) (LogStatistics []*LogStatis
 	`, userId, start, end).Scan(&LogStatistics).Error
 
 	return LogStatistics, err
+}
+
+type UserTokenUsageStat struct {
+	Username    string `json:"username"`
+	TotalTokens int64  `json:"total_tokens"`
+	Quota       int64  `json:"quota"`
+}
+
+func GetTokenUsageRanking(days int, limit int) ([]*UserTokenUsageStat, error) {
+	if days <= 0 {
+		days = 30
+	}
+	if limit <= 0 || limit > 100 {
+		limit = 20
+	}
+	start := time.Now().AddDate(0, 0, -days).Unix()
+
+	stats := make([]*UserTokenUsageStat, 0)
+	err := LOG_DB.Raw(`
+		SELECT username,
+		       SUM(prompt_tokens + completion_tokens) AS total_tokens,
+		       SUM(quota) AS quota
+		FROM logs
+		WHERE type = ?
+		AND created_at >= ?
+		AND username != ''
+		GROUP BY username
+		ORDER BY total_tokens DESC
+		LIMIT ?
+	`, LogTypeConsume, start, limit).Scan(&stats).Error
+	return stats, err
 }

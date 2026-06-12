@@ -4,6 +4,7 @@ import { gridSpacing } from 'store/constant';
 import StatisticalLineChartCard from './component/StatisticalLineChartCard';
 import StatisticalBarChart from './component/StatisticalBarChart';
 import UserRegisterChart from './component/UserRegisterChart';
+import TokenRankingTable from './component/TokenRankingTable';
 import { generateChartOptions, getLastSevenDays } from 'utils/chart';
 import { API } from 'utils/api';
 import { showError, calculateQuota, renderNumber, isAdmin } from 'utils/common';
@@ -19,6 +20,9 @@ const Dashboard = () => {
   const [registerChart, setRegisterChart] = useState(null);
   const [registerDays, setRegisterDays] = useState(30);
   const [registerLoading, setRegisterLoading] = useState(false);
+  const [tokenRanking, setTokenRanking] = useState([]);
+  const [tokenRankingDays, setTokenRankingDays] = useState(30);
+  const [tokenRankingLoading, setTokenRankingLoading] = useState(false);
   const userIsAdmin = isAdmin();
 
   const userDashboard = async () => {
@@ -60,6 +64,23 @@ const Dashboard = () => {
     adminDashboard(days);
   };
 
+  const fetchTokenRanking = async (days = 30) => {
+    setTokenRankingLoading(true);
+    try {
+      const res = await API.get(`/api/user/admin/token-ranking?days=${days}&limit=20`);
+      const { success, data } = res.data;
+      if (success) {
+        setTokenRanking(data || []);
+      }
+    } catch (_) {}
+    setTokenRankingLoading(false);
+  };
+
+  const handleTokenRankingDaysChange = (days) => {
+    setTokenRankingDays(days);
+    fetchTokenRanking(days);
+  };
+
   const loadUser = async () => {
     let res = await API.get(`/api/user/self`);
     const { success, message, data } = res.data;
@@ -75,6 +96,7 @@ const Dashboard = () => {
     loadUser();
     if (userIsAdmin) {
       adminDashboard(registerDays);
+      fetchTokenRanking(tokenRankingDays);
     }
   }, []);
 
@@ -146,6 +168,16 @@ const Dashboard = () => {
             chartData={registerChart}
             days={registerDays}
             onDaysChange={handleRegisterDaysChange}
+          />
+        </Grid>
+      )}
+      {userIsAdmin && (
+        <Grid item xs={12}>
+          <TokenRankingTable
+            isLoading={tokenRankingLoading}
+            data={tokenRanking}
+            days={tokenRankingDays}
+            onDaysChange={handleTokenRankingDaysChange}
           />
         </Grid>
       )}
