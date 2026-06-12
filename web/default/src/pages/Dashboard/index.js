@@ -70,13 +70,17 @@ const Dashboard = () => {
   const [tokenRanking, setTokenRanking] = useState([]);
   const [tokenRankingDays, setTokenRankingDays] = useState(30);
   const [tokenRankingLoading, setTokenRankingLoading] = useState(false);
+  const [selectedModels, setSelectedModels] = useState([]);
+  const [modelList, setModelList] = useState([]);
+  const [filterOpen, setFilterOpen] = useState(false);
   const userIsAdmin = isAdmin();
 
   useEffect(() => {
     fetchDashboardData();
     if (userIsAdmin) {
       fetchAdminDashboard(30);
-      fetchTokenRanking(30);
+      fetchTokenRanking(30, []);
+      fetchModelList(30);
     }
   }, []);
 
@@ -96,10 +100,20 @@ const Dashboard = () => {
     fetchAdminDashboard(days);
   };
 
-  const fetchTokenRanking = async (days = 30) => {
+  const fetchModelList = async (days = 30) => {
+    try {
+      const res = await axios.get(`/api/user/admin/log-models?days=${days}`);
+      if (res.data.success) {
+        setModelList(res.data.data || []);
+      }
+    } catch (_) {}
+  };
+
+  const fetchTokenRanking = async (days = 30, models = []) => {
     setTokenRankingLoading(true);
     try {
-      const res = await axios.get(`/api/user/admin/token-ranking?days=${days}&limit=20`);
+      const modelsParam = models.length > 0 ? `&models=${encodeURIComponent(models.join(','))}` : '';
+      const res = await axios.get(`/api/user/admin/token-ranking?days=${days}&limit=20${modelsParam}`);
       if (res.data.success) {
         setTokenRanking(res.data.data || []);
       }
@@ -109,7 +123,14 @@ const Dashboard = () => {
 
   const handleTokenRankingDaysChange = (days) => {
     setTokenRankingDays(days);
-    fetchTokenRanking(days);
+    setSelectedModels([]);
+    fetchTokenRanking(days, []);
+    fetchModelList(days);
+  };
+
+  const handleModelsChange = (models) => {
+    setSelectedModels(models);
+    fetchTokenRanking(tokenRankingDays, models);
   };
 
   const formatTokens = (n) => {
@@ -615,24 +636,29 @@ const Dashboard = () => {
       {userIsAdmin && (
         <Card fluid className='chart-card'>
           <Card.Content>
+            {/* 标题 + 时间段按钮 */}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
               <Card.Header>Token 用量排行</Card.Header>
-              <div style={{ display: 'flex', gap: '4px' }}>
+              <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+                <button
+                  onClick={() => setFilterOpen((v) => !v)}
+                  style={{
+                    padding: '4px 10px', fontSize: '12px', borderRadius: '6px', cursor: 'pointer',
+                    border: '1px solid', borderColor: filterOpen ? '#4318FF' : '#e2e8f0',
+                    background: filterOpen ? '#4318FF' : '#fff', color: filterOpen ? '#fff' : '#4a5568',
+                    fontWeight: filterOpen ? 600 : 400, transition: 'all 0.15s',
+                  }}
+                >
+                  模型筛选 {selectedModels.length > 0 && `(${selectedModels.length})`}
+                </button>
                 {[7, 30, 180].map((d) => (
-                  <button
-                    key={d}
-                    onClick={() => handleTokenRankingDaysChange(d)}
+                  <button key={d} onClick={() => handleTokenRankingDaysChange(d)}
                     style={{
-                      padding: '4px 10px',
-                      fontSize: '12px',
-                      border: '1px solid',
-                      borderRadius: '6px',
-                      cursor: 'pointer',
+                      padding: '4px 10px', fontSize: '12px', border: '1px solid', borderRadius: '6px', cursor: 'pointer',
                       borderColor: tokenRankingDays === d ? '#4318FF' : '#e2e8f0',
                       background: tokenRankingDays === d ? '#4318FF' : '#fff',
                       color: tokenRankingDays === d ? '#fff' : '#4a5568',
-                      fontWeight: tokenRankingDays === d ? 600 : 400,
-                      transition: 'all 0.15s',
+                      fontWeight: tokenRankingDays === d ? 600 : 400, transition: 'all 0.15s',
                     }}
                   >
                     {d === 180 ? '近半年' : `近${d}天`}
@@ -640,6 +666,46 @@ const Dashboard = () => {
                 ))}
               </div>
             </div>
+
+            {/* 模型筛选面板 */}
+            {filterOpen && (
+              <div style={{ marginTop: '10px', padding: '12px', background: '#f8f9fa', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px', fontSize: '12px', color: '#718096' }}>
+                  <span>{selectedModels.length === 0 ? '当前：全部模型' : `已选 ${selectedModels.length} / ${modelList.length} 个模型`}</span>
+                  <button onClick={() => handleModelsChange([])} style={{ fontSize: '11px', border: 'none', background: 'none', color: '#4318FF', cursor: 'pointer', padding: '0 4px' }}>全选</button>
+                  <button onClick={() => handleModelsChange([...modelList])} style={{ fontSize: '11px', border: 'none', background: 'none', color: '#718096', cursor: 'pointer', padding: '0 4px' }}>清除</button>
+                </div>
+                <div style={{ borderTop: '1px solid #e2e8f0', paddingTop: '8px', display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                  {modelList.map((m) => {
+                    const checked = selectedModels.length === 0 || selectedModels.includes(m);
+                    return (
+                      <label key={m} style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '12px', cursor: 'pointer',
+                        padding: '3px 8px', borderRadius: '12px', border: '1px solid',
+                        borderColor: checked ? '#4318FF' : '#e2e8f0',
+                        background: checked ? '#f0edff' : '#fff', color: checked ? '#4318FF' : '#718096',
+                      }}>
+                        <input type='checkbox' checked={checked}
+                          onChange={() => {
+                            if (selectedModels.length === 0) {
+                              handleModelsChange(modelList.filter((x) => x !== m));
+                            } else if (selectedModels.includes(m)) {
+                              handleModelsChange(selectedModels.filter((x) => x !== m));
+                            } else {
+                              handleModelsChange([...selectedModels, m]);
+                            }
+                          }}
+                          style={{ margin: 0, width: 12, height: 12 }}
+                        />
+                        {m}
+                      </label>
+                    );
+                  })}
+                  {modelList.length === 0 && <span style={{ fontSize: '12px', color: '#A3AED0' }}>暂无模型数据</span>}
+                </div>
+              </div>
+            )}
+
+            {/* 排行表格 */}
             <div style={{ marginTop: '12px' }}>
               {tokenRankingLoading ? (
                 <div style={{ minHeight: '160px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#A3AED0' }}>加载中...</div>
@@ -667,8 +733,7 @@ const Dashboard = () => {
                               <span style={{
                                 display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
                                 width: 22, height: 22, borderRadius: '50%',
-                                background: rankColors[idx], color: '#fff',
-                                fontSize: '11px', fontWeight: 700
+                                background: rankColors[idx], color: '#fff', fontSize: '11px', fontWeight: 700
                               }}>{idx + 1}</span>
                             ) : (
                               <span style={{ color: '#A3AED0', paddingLeft: 4 }}>{idx + 1}</span>
@@ -677,8 +742,7 @@ const Dashboard = () => {
                           <td style={{ padding: '10px 4px' }}>
                             <span style={{
                               display: 'inline-block', padding: '2px 10px',
-                              borderRadius: '12px', border: '1px solid #e2e8f0',
-                              fontSize: '13px', color: '#2B3674'
+                              borderRadius: '12px', border: '1px solid #e2e8f0', fontSize: '13px', color: '#2B3674'
                             }}>{row.username}</span>
                           </td>
                           <td style={{ padding: '10px 4px', textAlign: 'right', fontWeight: 600, color: '#2B3674' }}>

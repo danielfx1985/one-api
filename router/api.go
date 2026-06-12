@@ -62,6 +62,7 @@ func SetApiRouter(router *gin.Engine) {
 				adminRoute.DELETE("/:id", controller.DeleteUser)
 				adminRoute.GET("/admin/dashboard", controller.GetAdminDashboard)
 			adminRoute.GET("/admin/token-ranking", controller.GetTokenUsageRanking)
+			adminRoute.GET("/admin/log-models", controller.GetLogModelNames)
 			}
 		}
 		optionRoute := apiRouter.Group("/option")

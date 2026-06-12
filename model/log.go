@@ -257,7 +257,7 @@ type UserTokenUsageStat struct {
 	Quota       int64  `json:"quota"`
 }
 
-func GetTokenUsageRanking(days int, limit int) ([]*UserTokenUsageStat, error) {
+func GetTokenUsageRanking(days int, limit int, models []string) ([]*UserTokenUsageStat, error) {
 	if days <= 0 {
 		days = 30
 	}
@@ -266,18 +266,30 @@ func GetTokenUsageRanking(days int, limit int) ([]*UserTokenUsageStat, error) {
 	}
 	start := time.Now().AddDate(0, 0, -days).Unix()
 
+	tx := LOG_DB.Model(&Log{}).
+		Select("username, SUM(prompt_tokens + completion_tokens) AS total_tokens, SUM(quota) AS quota").
+		Where("type = ? AND created_at >= ? AND username != ''", LogTypeConsume, start)
+
+	if len(models) > 0 {
+		tx = tx.Where("model_name IN ?", models)
+	}
+
 	stats := make([]*UserTokenUsageStat, 0)
-	err := LOG_DB.Raw(`
-		SELECT username,
-		       SUM(prompt_tokens + completion_tokens) AS total_tokens,
-		       SUM(quota) AS quota
-		FROM logs
-		WHERE type = ?
-		AND created_at >= ?
-		AND username != ''
-		GROUP BY username
-		ORDER BY total_tokens DESC
-		LIMIT ?
-	`, LogTypeConsume, start, limit).Scan(&stats).Error
+	err := tx.Group("username").Order("total_tokens DESC").Limit(limit).Scan(&stats).Error
 	return stats, err
+}
+
+func GetLogModelNames(days int) ([]string, error) {
+	if days <= 0 {
+		days = 30
+	}
+	start := time.Now().AddDate(0, 0, -days).Unix()
+
+	var names []string
+	err := LOG_DB.Model(&Log{}).
+		Distinct("model_name").
+		Where("type = ? AND created_at >= ? AND model_name != ''", LogTypeConsume, start).
+		Order("model_name").
+		Pluck("model_name", &names).Error
+	return names, err
 }

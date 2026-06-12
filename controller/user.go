@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gin-contrib/sessions"
@@ -828,7 +829,16 @@ func GetTokenUsageRanking(c *gin.Context) {
 			limit = l
 		}
 	}
-	stats, err := model.GetTokenUsageRanking(days, limit)
+	var models []string
+	if modelsStr := c.Query("models"); modelsStr != "" {
+		for _, m := range strings.Split(modelsStr, ",") {
+			m = strings.TrimSpace(m)
+			if m != "" {
+				models = append(models, m)
+			}
+		}
+	}
+	stats, err := model.GetTokenUsageRanking(days, limit, models)
 	if err != nil {
 		c.JSON(http.StatusOK, gin.H{
 			"success": false,
@@ -841,6 +851,29 @@ func GetTokenUsageRanking(c *gin.Context) {
 		"success": true,
 		"message": "",
 		"data":    stats,
+	})
+}
+
+func GetLogModelNames(c *gin.Context) {
+	days := 30
+	if daysStr := c.Query("days"); daysStr != "" {
+		if d, err := strconv.Atoi(daysStr); err == nil && d > 0 && d <= 365 {
+			days = d
+		}
+	}
+	names, err := model.GetLogModelNames(days)
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{
+			"success": false,
+			"message": "无法获取模型列表",
+			"data":    nil,
+		})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"message": "",
+		"data":    names,
 	})
 }
 

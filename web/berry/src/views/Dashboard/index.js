@@ -23,6 +23,7 @@ const Dashboard = () => {
   const [tokenRanking, setTokenRanking] = useState([]);
   const [tokenRankingDays, setTokenRankingDays] = useState(30);
   const [tokenRankingLoading, setTokenRankingLoading] = useState(false);
+  const [selectedModels, setSelectedModels] = useState([]);
   const userIsAdmin = isAdmin();
 
   const userDashboard = async () => {
@@ -64,10 +65,11 @@ const Dashboard = () => {
     adminDashboard(days);
   };
 
-  const fetchTokenRanking = async (days = 30) => {
+  const fetchTokenRanking = async (days = 30, models = []) => {
     setTokenRankingLoading(true);
     try {
-      const res = await API.get(`/api/user/admin/token-ranking?days=${days}&limit=20`);
+      const modelsParam = models.length > 0 ? `&models=${encodeURIComponent(models.join(','))}` : '';
+      const res = await API.get(`/api/user/admin/token-ranking?days=${days}&limit=20${modelsParam}`);
       const { success, data } = res.data;
       if (success) {
         setTokenRanking(data || []);
@@ -78,7 +80,13 @@ const Dashboard = () => {
 
   const handleTokenRankingDaysChange = (days) => {
     setTokenRankingDays(days);
-    fetchTokenRanking(days);
+    setSelectedModels([]);
+    fetchTokenRanking(days, []);
+  };
+
+  const handleModelsChange = (models) => {
+    setSelectedModels(models);
+    fetchTokenRanking(tokenRankingDays, models);
   };
 
   const loadUser = async () => {
@@ -178,6 +186,8 @@ const Dashboard = () => {
             data={tokenRanking}
             days={tokenRankingDays}
             onDaysChange={handleTokenRankingDaysChange}
+            selectedModels={selectedModels}
+            onModelsChange={handleModelsChange}
           />
         </Grid>
       )}
