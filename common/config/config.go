@@ -102,6 +102,8 @@ var RetryTimes = 0
 
 var RootUserEmail = ""
 
+var UserAccessCode = ""
+
 var IsMasterNode = os.Getenv("NODE_TYPE") != "slave"
 
 var requestInterval, _ = strconv.Atoi(os.Getenv("POLLING_INTERVAL"))

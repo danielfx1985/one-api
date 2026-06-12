@@ -1,11 +1,14 @@
 import { useDispatch, useSelector } from 'react-redux';
 import { Outlet } from 'react-router-dom';
 import AuthGuard from 'utils/route-guard/AuthGuard';
+import { useState, useEffect } from 'react';
 
 // material-ui
 import { styled, useTheme } from '@mui/material/styles';
-import { AppBar, Box, CssBaseline, Toolbar, useMediaQuery } from '@mui/material';
+import { AppBar, Box, CssBaseline, Toolbar, useMediaQuery, Dialog, DialogTitle, DialogContent, DialogActions, TextField, Button, Typography, Alert } from '@mui/material';
+import { LockOutlined } from '@mui/icons-material';
 import AdminContainer from 'ui-component/AdminContainer';
+import { API } from 'utils/api';
 
 // project imports
 import Breadcrumbs from 'ui-component/extended/Breadcrumbs';
@@ -57,11 +60,45 @@ const Main = styled('main', { shouldForwardProp: (prop) => prop !== 'open' })(({
 const MainLayout = () => {
   const theme = useTheme();
   const matchDownMd = useMediaQuery(theme.breakpoints.down('md'));
-  // Handle left drawer
   const leftDrawerOpened = useSelector((state) => state.customization.opened);
+  const account = useSelector((state) => state.account);
   const dispatch = useDispatch();
   const handleLeftDrawerToggle = () => {
     dispatch({ type: SET_MENU, opened: !leftDrawerOpened });
+  };
+
+  const [accessCodeOpen, setAccessCodeOpen] = useState(false);
+  const [accessCode, setAccessCode] = useState('');
+  const [accessCodeError, setAccessCodeError] = useState('');
+  const [accessCodeLoading, setAccessCodeLoading] = useState(false);
+
+  useEffect(() => {
+    const siteInfo = JSON.parse(localStorage.getItem('siteInfo') || '{}');
+    const isAdmin = account.user?.role >= 10;
+    const verified = sessionStorage.getItem('access_code_verified');
+    if (siteInfo.access_code_enabled && account.user && !isAdmin && !verified) {
+      setAccessCodeOpen(true);
+    }
+  }, [account.user]);
+
+  const handleVerifyAccessCode = async () => {
+    if (!accessCode.trim()) { setAccessCodeError('请输入访问码'); return; }
+    setAccessCodeLoading(true);
+    try {
+      const res = await API.post('/api/user/verify_access', { code: accessCode });
+      const { success, message } = res.data;
+      if (success) {
+        sessionStorage.setItem('access_code_verified', '1');
+        setAccessCodeOpen(false);
+        setAccessCode('');
+        setAccessCodeError('');
+      } else {
+        setAccessCodeError(message || '访问码错误');
+      }
+    } catch (_) {
+      setAccessCodeError('验证失败，请重试');
+    }
+    setAccessCodeLoading(false);
   };
 
   return (
@@ -96,6 +133,33 @@ const MainLayout = () => {
           </AdminContainer>
         </AuthGuard>
       </Main>
+
+      {/* 访问码验证弹窗 */}
+      <Dialog open={accessCodeOpen} disableEscapeKeyDown maxWidth="xs" fullWidth
+        PaperProps={{ sx: { borderRadius: 3 } }}>
+        <DialogTitle sx={{ textAlign: 'center', pt: 3 }}>
+          <LockOutlined sx={{ fontSize: 40, color: 'primary.main', mb: 1, display: 'block', mx: 'auto' }} />
+          <Typography variant="h3">需要访问码</Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+            请输入管理员设置的访问码以继续使用
+          </Typography>
+        </DialogTitle>
+        <DialogContent>
+          {accessCodeError && <Alert severity="error" sx={{ mb: 2 }}>{accessCodeError}</Alert>}
+          <TextField
+            fullWidth autoFocus type="password" label="访问码" value={accessCode}
+            onChange={(e) => { setAccessCode(e.target.value); setAccessCodeError(''); }}
+            onKeyDown={(e) => e.key === 'Enter' && handleVerifyAccessCode()}
+            variant="outlined"
+          />
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 3 }}>
+          <Button fullWidth variant="contained" size="large" disabled={accessCodeLoading}
+            onClick={handleVerifyAccessCode}>
+            {accessCodeLoading ? '验证中…' : '确认'}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };

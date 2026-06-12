@@ -44,6 +44,7 @@ func GetStatus(c *gin.Context) {
 			"oidc_authorization_endpoint": config.OidcAuthorizationEndpoint,
 			"oidc_token_endpoint":         config.OidcTokenEndpoint,
 			"oidc_userinfo_endpoint":      config.OidcUserinfoEndpoint,
+		"access_code_enabled":         config.UserAccessCode != "",
 		},
 	})
 	return

@@ -75,6 +75,7 @@ func InitOptionMap() {
 	config.OptionMap["QuotaPerUnit"] = strconv.FormatFloat(config.QuotaPerUnit, 'f', -1, 64)
 	config.OptionMap["RetryTimes"] = strconv.Itoa(config.RetryTimes)
 	config.OptionMap["Theme"] = config.Theme
+	config.OptionMap["UserAccessCode"] = ""
 	config.OptionMapRWMutex.Unlock()
 	loadOptionsFromDatabase()
 }
@@ -239,6 +240,8 @@ func updateOptionMap(key string, value string) (err error) {
 		config.QuotaPerUnit, _ = strconv.ParseFloat(value, 64)
 	case "Theme":
 		config.Theme = value
+	case "UserAccessCode":
+		config.UserAccessCode = value
 	}
 	return err
 }

@@ -64,6 +64,7 @@ func SetApiRouter(router *gin.Engine) {
 			adminRoute.GET("/admin/token-ranking", controller.GetTokenUsageRanking)
 			adminRoute.GET("/admin/log-models", controller.GetLogModelNames)
 			}
+			selfRoute.POST("/verify_access", controller.VerifyUserAccessCode)
 		}
 		optionRoute := apiRouter.Group("/option")
 		optionRoute.Use(middleware.RootAuth())

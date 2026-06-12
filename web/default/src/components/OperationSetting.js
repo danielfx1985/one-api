@@ -32,6 +32,7 @@ const OperationSetting = () => {
     DisplayTokenStatEnabled: '',
     ApproximateTokenEnabled: '',
     RetryTimes: 0,
+    UserAccessCode: '',
   });
   const [originInputs, setOriginInputs] = useState({});
   let [loading, setLoading] = useState(false);
@@ -164,6 +165,9 @@ const OperationSetting = () => {
         }
         if (originInputs['RetryTimes'] !== inputs.RetryTimes) {
           await updateOption('RetryTimes', inputs.RetryTimes);
+        }
+        if (originInputs['UserAccessCode'] !== inputs.UserAccessCode) {
+          await updateOption('UserAccessCode', inputs.UserAccessCode);
         }
         break;
     }
@@ -408,6 +412,14 @@ const OperationSetting = () => {
               placeholder={t(
                 'setting.operation.general.retry_times_placeholder'
               )}
+            />
+            <Form.Input
+              label='用户访问码'
+              name='UserAccessCode'
+              onChange={handleInputChange}
+              autoComplete='new-password'
+              value={inputs.UserAccessCode}
+              placeholder='留空则不限制非管理员访问'
             />
           </Form.Group>
           <Form.Group inline>

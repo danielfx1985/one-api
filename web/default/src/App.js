@@ -1,6 +1,7 @@
-import React, { lazy, Suspense, useContext, useEffect } from 'react';
+import React, { lazy, Suspense, useContext, useEffect, useState } from 'react';
 import { Route, Routes } from 'react-router-dom';
 import Loading from './components/Loading';
+import { Modal, Form, Input, Button, Message } from 'semantic-ui-react';
 import User from './pages/User';
 import { PrivateRoute } from './components/PrivateRoute';
 import RegisterForm from './components/RegisterForm';
@@ -33,6 +34,10 @@ const About = lazy(() => import('./pages/About'));
 function App() {
   const [userState, userDispatch] = useContext(UserContext);
   const [statusState, statusDispatch] = useContext(StatusContext);
+  const [accessCodeOpen, setAccessCodeOpen] = useState(false);
+  const [accessCode, setAccessCode] = useState('');
+  const [accessCodeError, setAccessCodeError] = useState('');
+  const [accessCodeLoading, setAccessCodeLoading] = useState(false);
 
   const loadUser = () => {
     let user = localStorage.getItem('user');
@@ -77,6 +82,34 @@ function App() {
   };
 
   useEffect(() => {
+    const status = JSON.parse(localStorage.getItem('status') || '{}');
+    const user = JSON.parse(localStorage.getItem('user') || 'null');
+    if (status.access_code_enabled && user && user.role < 10 && !sessionStorage.getItem('access_code_verified')) {
+      setAccessCodeOpen(true);
+    }
+  }, [userState.user]);
+
+  const handleVerifyAccessCode = async () => {
+    if (!accessCode.trim()) { setAccessCodeError('请输入访问码'); return; }
+    setAccessCodeLoading(true);
+    try {
+      const res = await API.post('/api/user/verify_access', { code: accessCode });
+      const { success, message } = res.data;
+      if (success) {
+        sessionStorage.setItem('access_code_verified', '1');
+        setAccessCodeOpen(false);
+        setAccessCode('');
+        setAccessCodeError('');
+      } else {
+        setAccessCodeError(message || '访问码错误');
+      }
+    } catch (_) {
+      setAccessCodeError('验证失败，请重试');
+    }
+    setAccessCodeLoading(false);
+  };
+
+  useEffect(() => {
     loadUser();
     loadStatus().then();
     let systemName = getSystemName();
@@ -93,6 +126,32 @@ function App() {
   }, []);
 
   return (
+    <>
+    <Modal open={accessCodeOpen} size='tiny' closeOnEscape={false} closeOnDimmerClick={false}>
+      <Modal.Header>
+        <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          🔒 需要访问码
+        </span>
+      </Modal.Header>
+      <Modal.Content>
+        <p style={{ color: '#666', marginBottom: 12 }}>请输入管理员设置的访问码以继续使用</p>
+        {accessCodeError && <Message negative>{accessCodeError}</Message>}
+        <Form>
+          <Form.Field>
+            <Input
+              type='password' placeholder='输入访问码' value={accessCode} fluid
+              onChange={(e) => { setAccessCode(e.target.value); setAccessCodeError(''); }}
+              onKeyDown={(e) => e.key === 'Enter' && handleVerifyAccessCode()}
+            />
+          </Form.Field>
+        </Form>
+      </Modal.Content>
+      <Modal.Actions>
+        <Button primary fluid loading={accessCodeLoading} onClick={handleVerifyAccessCode}>
+          确认
+        </Button>
+      </Modal.Actions>
+    </Modal>
     <Routes>
       <Route
         path='/'
@@ -308,6 +367,7 @@ function App() {
       />
       <Route path='*' element={<NotFound />} />
     </Routes>
+    </>
   );
 }
 
