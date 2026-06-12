@@ -48,6 +48,7 @@ func SetApiRouter(router *gin.Engine) {
 				selfRoute.GET("/aff", controller.GetAffCode)
 				selfRoute.POST("/topup", controller.TopUp)
 				selfRoute.GET("/available_models", controller.GetUserAvailableModels)
+				selfRoute.POST("/verify_access", controller.VerifyUserAccessCode)
 			}
 
 			adminRoute := userRoute.Group("/")
@@ -64,7 +65,6 @@ func SetApiRouter(router *gin.Engine) {
 			adminRoute.GET("/admin/token-ranking", controller.GetTokenUsageRanking)
 			adminRoute.GET("/admin/log-models", controller.GetLogModelNames)
 			}
-			selfRoute.POST("/verify_access", controller.VerifyUserAccessCode)
 		}
 		optionRoute := apiRouter.Group("/option")
 		optionRoute.Use(middleware.RootAuth())

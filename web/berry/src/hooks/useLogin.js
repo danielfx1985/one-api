@@ -112,6 +112,7 @@ const useLogin = () => {
   const logout = async () => {
     await API.get('/api/user/logout');
     localStorage.removeItem('user');
+    sessionStorage.removeItem('access_code_verified');
     dispatch({ type: LOGIN, payload: null });
     navigate('/');
   };

@@ -62,6 +62,7 @@ const MainLayout = () => {
   const matchDownMd = useMediaQuery(theme.breakpoints.down('md'));
   const leftDrawerOpened = useSelector((state) => state.customization.opened);
   const account = useSelector((state) => state.account);
+  const siteInfo = useSelector((state) => state.siteInfo);
   const dispatch = useDispatch();
   const handleLeftDrawerToggle = () => {
     dispatch({ type: SET_MENU, opened: !leftDrawerOpened });
@@ -73,13 +74,37 @@ const MainLayout = () => {
   const [accessCodeLoading, setAccessCodeLoading] = useState(false);
 
   useEffect(() => {
-    const siteInfo = JSON.parse(localStorage.getItem('siteInfo') || '{}');
-    const isAdmin = account.user?.role >= 10;
-    const verified = sessionStorage.getItem('access_code_verified');
-    if (siteInfo.access_code_enabled && account.user && !isAdmin && !verified) {
-      setAccessCodeOpen(true);
+    const user = account.user;
+    if (!user || user.role >= 10) {
+      setAccessCodeOpen(false);
+      return;
     }
-  }, [account.user]);
+    if (sessionStorage.getItem('access_code_verified')) {
+      setAccessCodeOpen(false);
+      return;
+    }
+
+    const openIfRequired = (enabled) => {
+      setAccessCodeOpen(!!enabled);
+    };
+
+    if (siteInfo.access_code_enabled) {
+      openIfRequired(true);
+      return;
+    }
+
+    let cancelled = false;
+    API.get('/api/status')
+      .then((res) => {
+        if (cancelled) return;
+        const enabled = !!res.data?.data?.access_code_enabled;
+        openIfRequired(enabled);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [account.user, siteInfo.access_code_enabled]);
 
   const handleVerifyAccessCode = async () => {
     if (!accessCode.trim()) { setAccessCodeError('请输入访问码'); return; }
@@ -136,6 +161,7 @@ const MainLayout = () => {
 
       {/* 访问码验证弹窗 */}
       <Dialog open={accessCodeOpen} disableEscapeKeyDown maxWidth="xs" fullWidth
+        sx={{ zIndex: 9999 }}
         PaperProps={{ sx: { borderRadius: 3 } }}>
         <DialogTitle sx={{ textAlign: 'center', pt: 3 }}>
           <LockOutlined sx={{ fontSize: 40, color: 'primary.main', mb: 1, display: 'block', mx: 'auto' }} />

@@ -99,6 +99,7 @@ const Header = () => {
     showSuccess('注销成功!');
     userDispatch({ type: 'logout' });
     localStorage.removeItem('user');
+    sessionStorage.removeItem('access_code_verified');
     navigate('/login');
   }
 

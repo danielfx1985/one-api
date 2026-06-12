@@ -82,12 +82,37 @@ function App() {
   };
 
   useEffect(() => {
-    const status = JSON.parse(localStorage.getItem('status') || '{}');
-    const user = JSON.parse(localStorage.getItem('user') || 'null');
-    if (status.access_code_enabled && user && user.role < 10 && !sessionStorage.getItem('access_code_verified')) {
-      setAccessCodeOpen(true);
+    const user = userState.user;
+    if (!user || user.role >= 10) {
+      setAccessCodeOpen(false);
+      return;
     }
-  }, [userState.user]);
+    if (sessionStorage.getItem('access_code_verified')) {
+      setAccessCodeOpen(false);
+      return;
+    }
+
+    const openIfRequired = (enabled) => {
+      setAccessCodeOpen(!!enabled);
+    };
+
+    if (statusState.status?.access_code_enabled) {
+      openIfRequired(true);
+      return;
+    }
+
+    let cancelled = false;
+    API.get('/api/status')
+      .then((res) => {
+        if (cancelled) return;
+        const enabled = !!res.data?.data?.access_code_enabled;
+        openIfRequired(enabled);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [userState.user, statusState.status?.access_code_enabled]);
 
   const handleVerifyAccessCode = async () => {
     if (!accessCode.trim()) { setAccessCodeError('请输入访问码'); return; }
@@ -127,7 +152,7 @@ function App() {
 
   return (
     <>
-    <Modal open={accessCodeOpen} size='tiny' closeOnEscape={false} closeOnDimmerClick={false}>
+    <Modal open={accessCodeOpen} size='tiny' closeOnEscape={false} closeOnDimmerClick={false} style={{ zIndex: 9999 }}>
       <Modal.Header>
         <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           🔒 需要访问码
