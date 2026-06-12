@@ -9,7 +9,8 @@ const PERIOD_OPTIONS = [
   { label: '近7天', value: 7 },
   { label: '近14天', value: 14 },
   { label: '近30天', value: 30 },
-  { label: '近90天', value: 90 }
+  { label: '近90天', value: 90 },
+  { label: '近半年', value: 180 }
 ];
 
 const UserRegisterChart = ({ isLoading, chartData, days, onDaysChange }) => {

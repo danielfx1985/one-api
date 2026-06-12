@@ -512,7 +512,7 @@ const Dashboard = () => {
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
               <Card.Header>用户注册趋势</Card.Header>
               <div style={{ display: 'flex', gap: '4px' }}>
-                {[7, 14, 30, 90].map((d) => (
+                {[7, 14, 30, 90, 180].map((d) => (
                   <button
                     key={d}
                     onClick={() => handleRegisterDaysChange(d)}
@@ -529,7 +529,7 @@ const Dashboard = () => {
                       transition: 'all 0.15s',
                     }}
                   >
-                    近{d}天
+                    {d === 180 ? '近半年' : `近${d}天`}
                   </button>
                 ))}
               </div>
