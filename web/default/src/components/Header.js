@@ -35,7 +35,6 @@ let headerButtons = [
     name: 'header.token',
     to: '/token',
     icon: 'key',
-    root: true,
   },
   {
     name: 'header.redemption',
@@ -108,9 +107,14 @@ const Header = () => {
   };
 
   const renderButtons = (isMobile) => {
+    const userIsAdmin = isAdmin();
     return headerButtons.map((button) => {
-      if (button.admin && !isAdmin()) return <></>;
-      if (button.root && !isRoot()) return <></>;
+      if (!userIsAdmin) {
+        if (button.to !== '/token') return <></>;
+      } else {
+        if (button.admin && !userIsAdmin) return <></>;
+        if (button.root && !isRoot()) return <></>;
+      }
       if (isMobile) {
         return (
           <Menu.Item

@@ -4,6 +4,8 @@ import { LOGIN } from 'store/actions';
 import { useNavigate } from 'react-router';
 import { showSuccess } from 'utils/common';
 
+const getHomePath = (user) => (user?.role >= 10 ? '/panel' : '/panel/token');
+
 const useLogin = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -17,7 +19,7 @@ const useLogin = () => {
       if (success) {
         localStorage.setItem('user', JSON.stringify(data));
         dispatch({ type: LOGIN, payload: data });
-        navigate('/panel');
+        navigate(getHomePath(data));
       }
       return { success, message };
     } catch (err) {
@@ -33,12 +35,12 @@ const useLogin = () => {
       if (success) {
         if (message === 'bind') {
           showSuccess('绑定成功！');
-          navigate('/panel');
+          navigate(getHomePath(data));
         } else {
           dispatch({ type: LOGIN, payload: data });
           localStorage.setItem('user', JSON.stringify(data));
           showSuccess('登录成功！');
-          navigate('/panel');
+          navigate(getHomePath(data));
         }
       }
       return { success, message };
@@ -55,12 +57,12 @@ const useLogin = () => {
       if (success) {
         if (message === 'bind') {
           showSuccess('绑定成功！');
-          navigate('/panel');
+          navigate(getHomePath(data));
         } else {
           dispatch({ type: LOGIN, payload: data });
           localStorage.setItem('user', JSON.stringify(data));
           showSuccess('登录成功！');
-          navigate('/panel');
+          navigate(getHomePath(data));
         }
       }
       return { success, message };
@@ -77,12 +79,12 @@ const useLogin = () => {
       if (success) {
         if (message === 'bind') {
           showSuccess('绑定成功！');
-          navigate('/panel');
+          navigate(getHomePath(data));
         } else {
           dispatch({ type: LOGIN, payload: data });
           localStorage.setItem('user', JSON.stringify(data));
           showSuccess('登录成功！');
-          navigate('/panel');
+          navigate(getHomePath(data));
         }
       }
       return { success, message };
@@ -100,7 +102,7 @@ const useLogin = () => {
         dispatch({ type: LOGIN, payload: data });
         localStorage.setItem('user', JSON.stringify(data));
         showSuccess('登录成功！');
-        navigate('/panel');
+        navigate(getHomePath(data));
       }
       return { success, message };
     } catch (err) {

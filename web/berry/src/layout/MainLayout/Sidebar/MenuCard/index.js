@@ -18,6 +18,7 @@ import {
 } from '@mui/material';
 import User1 from 'assets/images/users/user-round.svg';
 import { useNavigate } from 'react-router-dom';
+import { isAdmin } from 'utils/common';
 
 // assets
 // import TableChartOutlinedIcon from '@mui/icons-material/TableChartOutlined';
@@ -105,9 +106,10 @@ const MenuCard = () => {
                   border: 'none',
                   borderColor: theme.palette.primary.main,
                   background: '#fff',
-                  marginRight: '12px'
+                  marginRight: '12px',
+                  cursor: isAdmin() ? 'pointer' : 'default'
                 }}
-                onClick={() => navigate('/panel/profile')}
+                onClick={isAdmin() ? () => navigate('/panel/profile') : undefined}
               ></Avatar>
             </ListItemAvatar>
             <ListItemText

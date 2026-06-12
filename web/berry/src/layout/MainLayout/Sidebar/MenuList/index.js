@@ -21,7 +21,12 @@ const MenuList = () => {
           );
         }
 
-        const filteredChildren = item.children.filter((child) => !child.isAdmin || userIsAdmin);
+        const filteredChildren = item.children.filter((child) => {
+          if (!userIsAdmin) {
+            return child.id === 'token';
+          }
+          return !child.isAdmin || userIsAdmin;
+        });
 
         if (filteredChildren.length === 0) {
           return null;
