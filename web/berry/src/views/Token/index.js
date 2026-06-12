@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { showError, showSuccess } from 'utils/common';
+import { showError, showSuccess, getTokenApiBase } from 'utils/common';
 
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
@@ -32,7 +32,7 @@ export default function Token() {
 
   const loadTokens = async (startIdx) => {
     setSearching(true);
-    const res = await API.get(`/api/token/?p=${startIdx}`);
+    const res = await API.get(`${getTokenApiBase()}/?p=${startIdx}`);
     const { success, message, data } = res.data;
     if (success) {
       if (startIdx === 0) {
@@ -74,7 +74,7 @@ export default function Token() {
       return;
     }
     setSearching(true);
-    const res = await API.get(`/api/token/search?keyword=${searchKeyword}`);
+    const res = await API.get(`${getTokenApiBase()}/search?keyword=${searchKeyword}`);
     const { success, message, data } = res.data;
     if (success) {
       setTokens(data);
@@ -90,7 +90,7 @@ export default function Token() {
   };
 
   const manageToken = async (id, action, value) => {
-    const url = '/api/token/';
+    const url = `${getTokenApiBase()}/`;
     let data = { id };
     let res;
     switch (action) {

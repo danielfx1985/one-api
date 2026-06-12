@@ -17,6 +17,7 @@ import {
   showSuccess,
   showWarning,
   timestamp2string,
+  getTokenApiBase,
 } from '../helpers';
 
 import { ITEMS_PER_PAGE } from '../constants';
@@ -89,7 +90,7 @@ const TokensTable = () => {
   const [orderBy, setOrderBy] = useState('');
 
   const loadTokens = async (startIdx) => {
-    const res = await API.get(`/api/token/?p=${startIdx}&order=${orderBy}`);
+    const res = await API.get(`${getTokenApiBase()}/?p=${startIdx}&order=${orderBy}`);
     const { success, message, data } = res.data;
     if (success) {
       if (startIdx === 0) {
@@ -224,15 +225,15 @@ const TokensTable = () => {
     let res;
     switch (action) {
       case 'delete':
-        res = await API.delete(`/api/token/${id}/`);
+        res = await API.delete(`${getTokenApiBase()}/${id}/`);
         break;
       case 'enable':
         data.status = 1;
-        res = await API.put('/api/token/?status_only=true', data);
+        res = await API.put(`${getTokenApiBase()}/?status_only=true`, data);
         break;
       case 'disable':
         data.status = 2;
-        res = await API.put('/api/token/?status_only=true', data);
+        res = await API.put(`${getTokenApiBase()}/?status_only=true`, data);
         break;
     }
     const { success, message } = res.data;
@@ -261,7 +262,7 @@ const TokensTable = () => {
       return;
     }
     setSearching(true);
-    const res = await API.get(`/api/token/search?keyword=${searchKeyword}`);
+    const res = await API.get(`${getTokenApiBase()}/search?keyword=${searchKeyword}`);
     const { success, message, data } = res.data;
     if (success) {
       setTokens(data);

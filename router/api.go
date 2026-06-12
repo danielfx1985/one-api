@@ -49,6 +49,17 @@ func SetApiRouter(router *gin.Engine) {
 				selfRoute.POST("/topup", controller.TopUp)
 				selfRoute.GET("/available_models", controller.GetUserAvailableModels)
 				selfRoute.POST("/verify_access", controller.VerifyUserAccessCode)
+
+				tokenSelfRoute := selfRoute.Group("/tokens")
+				tokenSelfRoute.Use(middleware.AccessCodeAuth())
+				{
+					tokenSelfRoute.GET("/", controller.GetAllTokens)
+					tokenSelfRoute.GET("/search", controller.SearchTokens)
+					tokenSelfRoute.GET("/:id", controller.GetToken)
+					tokenSelfRoute.POST("/", controller.AddToken)
+					tokenSelfRoute.PUT("/", controller.UpdateToken)
+					tokenSelfRoute.DELETE("/:id", controller.DeleteToken)
+				}
 			}
 
 			adminRoute := userRoute.Group("/")

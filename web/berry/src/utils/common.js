@@ -126,6 +126,10 @@ export function isRoot() {
     return user.role >= 100;
 }
 
+export function getTokenApiBase() {
+    return isRoot() ? '/api/token' : '/api/user/tokens';
+}
+
 export function timestamp2string(timestamp) {
     let date = new Date(timestamp * 1000);
     let year = date.getFullYear().toString();

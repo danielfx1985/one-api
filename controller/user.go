@@ -893,6 +893,12 @@ func VerifyUserAccessCode(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"success": false, "message": "invalid access code"})
 		return
 	}
+	session := sessions.Default(c)
+	session.Set("access_code_verified", true)
+	if err := session.Save(); err != nil {
+		c.JSON(http.StatusOK, gin.H{"success": false, "message": err.Error()})
+		return
+	}
 	c.JSON(http.StatusOK, gin.H{"success": true, "message": ""})
 }
 

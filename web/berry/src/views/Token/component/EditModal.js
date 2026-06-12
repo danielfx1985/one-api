@@ -26,7 +26,7 @@ import {
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
-import { renderQuotaWithPrompt, showSuccess, showError } from 'utils/common';
+import { renderQuotaWithPrompt, showSuccess, showError, getTokenApiBase } from 'utils/common';
 import { API } from 'utils/api';
 import CheckBoxOutlineBlankIcon from '@mui/icons-material/CheckBoxOutlineBlank';
 import CheckBoxIcon from '@mui/icons-material/CheckBox';
@@ -65,10 +65,11 @@ const EditModal = ({ open, tokenId, onCancel, onOk }) => {
     values.remain_quota = parseInt(values.remain_quota);
     let res;
     let models = values.models.join(',');
+    const tokenApiBase = getTokenApiBase();
     if (values.is_edit) {
-      res = await API.put(`/api/token/`, { ...values, id: parseInt(tokenId), models: models });
+      res = await API.put(`${tokenApiBase}/`, { ...values, id: parseInt(tokenId), models: models });
     } else {
-      res = await API.post(`/api/token/`, { ...values, models: models });
+      res = await API.post(`${tokenApiBase}/`, { ...values, models: models });
     }
     const { success, message } = res.data;
     if (success) {
@@ -87,7 +88,7 @@ const EditModal = ({ open, tokenId, onCancel, onOk }) => {
   };
 
   const loadToken = async () => {
-    let res = await API.get(`/api/token/${tokenId}`);
+    let res = await API.get(`${getTokenApiBase()}/${tokenId}`);
     const { success, message, data } = res.data;
     if (success) {
       data.is_edit = true;

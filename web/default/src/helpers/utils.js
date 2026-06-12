@@ -22,6 +22,10 @@ export function isRoot() {
   return user.role >= 100;
 }
 
+export function getTokenApiBase() {
+  return isRoot() ? '/api/token' : '/api/user/tokens';
+}
+
 export function getSystemName() {
   let system_name = localStorage.getItem('system_name');
   if (!system_name) return 'One API';

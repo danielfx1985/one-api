@@ -15,6 +15,7 @@ import {
   showError,
   showSuccess,
   timestamp2string,
+  getTokenApiBase,
 } from '../../helpers';
 import { renderQuotaWithPrompt } from '../../helpers/render';
 
@@ -63,7 +64,7 @@ const EditToken = () => {
 
   const loadToken = async () => {
     try {
-      let res = await API.get(`/api/token/${tokenId}`);
+      let res = await API.get(`${getTokenApiBase()}/${tokenId}`);
       const { success, message, data } = res.data || {};
       if (success && data) {
         if (data.expired_time !== -1) {
@@ -132,12 +133,12 @@ const EditToken = () => {
     localInputs.models = localInputs.models.join(',');
     let res;
     if (isEdit) {
-      res = await API.put(`/api/token/`, {
+      res = await API.put(`${getTokenApiBase()}/`, {
         ...localInputs,
         id: parseInt(tokenId),
       });
     } else {
-      res = await API.post(`/api/token/`, localInputs);
+      res = await API.post(`${getTokenApiBase()}/`, localInputs);
     }
     const { success, message } = res.data;
     if (success) {
