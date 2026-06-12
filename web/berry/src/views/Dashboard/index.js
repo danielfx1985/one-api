@@ -17,6 +17,8 @@ const Dashboard = () => {
   const [tokenChart, setTokenChart] = useState(null);
   const [users, setUsers] = useState([]);
   const [registerChart, setRegisterChart] = useState(null);
+  const [registerDays, setRegisterDays] = useState(30);
+  const [registerLoading, setRegisterLoading] = useState(false);
   const userIsAdmin = isAdmin();
 
   const userDashboard = async () => {
@@ -36,18 +38,26 @@ const Dashboard = () => {
     setLoading(false);
   };
 
-  const adminDashboard = async () => {
+  const adminDashboard = async (days = 30) => {
+    setRegisterLoading(true);
     try {
-      const res = await API.get('/api/user/admin/dashboard');
+      const res = await API.get(`/api/user/admin/dashboard?days=${days}`);
       const { success, message, data } = res.data;
       if (success) {
-        setRegisterChart(getRegisterChartOption(data || []));
+        setRegisterChart(getRegisterChartOption(data || [], days));
       } else {
         showError(message || '获取注册统计失败');
       }
     } catch (e) {
       showError('获取注册统计失败: ' + e.message);
+    } finally {
+      setRegisterLoading(false);
     }
+  };
+
+  const handleRegisterDaysChange = (days) => {
+    setRegisterDays(days);
+    adminDashboard(days);
   };
 
   const loadUser = async () => {
@@ -64,7 +74,7 @@ const Dashboard = () => {
     userDashboard();
     loadUser();
     if (userIsAdmin) {
-      adminDashboard();
+      adminDashboard(registerDays);
     }
   }, []);
 
@@ -131,7 +141,12 @@ const Dashboard = () => {
       </Grid>
       {userIsAdmin && (
         <Grid item xs={12}>
-          <UserRegisterChart isLoading={isLoading} chartData={registerChart} />
+          <UserRegisterChart
+            isLoading={registerLoading}
+            chartData={registerChart}
+            days={registerDays}
+            onDaysChange={handleRegisterDaysChange}
+          />
         </Grid>
       )}
     </Grid>
@@ -242,11 +257,11 @@ function getLineCardOption(lineDataGroup, field) {
   return { chartData: chartData, todayValue: todayValue };
 }
 
-function getRegisterChartOption(data) {
+function getRegisterChartOption(data, days = 30) {
   const dateMap = new Map(data.map((item) => [item.day, item.count]));
   const dates = [];
   const counts = [];
-  for (let i = 29; i >= 0; i--) {
+  for (let i = days - 1; i >= 0; i--) {
     const d = new Date();
     d.setDate(d.getDate() - i);
     // Use local date to match MySQL server timezone (not UTC)

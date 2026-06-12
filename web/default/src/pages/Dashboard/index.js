@@ -65,31 +65,41 @@ const Dashboard = () => {
     todayTokens: 0,
   });
   const [registerData, setRegisterData] = useState([]);
+  const [registerDays, setRegisterDays] = useState(30);
+  const [registerLoading, setRegisterLoading] = useState(false);
   const userIsAdmin = isAdmin();
 
   useEffect(() => {
     fetchDashboardData();
     if (userIsAdmin) {
-      fetchAdminDashboard();
+      fetchAdminDashboard(30);
     }
   }, []);
 
-  const fetchAdminDashboard = async () => {
+  const fetchAdminDashboard = async (days = 30) => {
+    setRegisterLoading(true);
     try {
-      const res = await axios.get('/api/user/admin/dashboard');
+      const res = await axios.get(`/api/user/admin/dashboard?days=${days}`);
       if (res.data.success) {
-        setRegisterData(buildRegisterSeries(res.data.data || []));
+        setRegisterData(buildRegisterSeries(res.data.data || [], days));
       }
     } catch (_) {}
+    setRegisterLoading(false);
   };
 
-  const buildRegisterSeries = (raw) => {
+  const handleRegisterDaysChange = (days) => {
+    setRegisterDays(days);
+    fetchAdminDashboard(days);
+  };
+
+  const buildRegisterSeries = (raw, days = 30) => {
     const map = new Map((raw || []).map((item) => [item.day, item.count]));
     const result = [];
-    for (let i = 29; i >= 0; i--) {
+    for (let i = days - 1; i >= 0; i--) {
       const d = new Date();
       d.setDate(d.getDate() - i);
-      const day = d.toISOString().slice(0, 10);
+      const pad = (n) => String(n).padStart(2, '0');
+      const day = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
       result.push({ date: day, count: map.get(day) || 0 });
     }
     return result;
@@ -499,8 +509,35 @@ const Dashboard = () => {
       {userIsAdmin && (
         <Card fluid className='chart-card'>
           <Card.Content>
-            <Card.Header>用户注册趋势（近30天）</Card.Header>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
+              <Card.Header>用户注册趋势</Card.Header>
+              <div style={{ display: 'flex', gap: '4px' }}>
+                {[7, 14, 30, 90].map((d) => (
+                  <button
+                    key={d}
+                    onClick={() => handleRegisterDaysChange(d)}
+                    style={{
+                      padding: '4px 10px',
+                      fontSize: '12px',
+                      border: '1px solid',
+                      borderRadius: '6px',
+                      cursor: 'pointer',
+                      borderColor: registerDays === d ? '#4318FF' : '#e2e8f0',
+                      background: registerDays === d ? '#4318FF' : '#fff',
+                      color: registerDays === d ? '#fff' : '#4a5568',
+                      fontWeight: registerDays === d ? 600 : 400,
+                      transition: 'all 0.15s',
+                    }}
+                  >
+                    近{d}天
+                  </button>
+                ))}
+              </div>
+            </div>
             <div className='chart-container'>
+              {registerLoading ? (
+                <div style={{ minHeight: '260px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#A3AED0' }}>加载中...</div>
+              ) : (
               <ResponsiveContainer width='100%' height={260}>
                 <AreaChart data={registerData}>
                   <defs>
@@ -541,6 +578,7 @@ const Dashboard = () => {
                   />
                 </AreaChart>
               </ResponsiveContainer>
+              )}
             </div>
           </Card.Content>
         </Card>

@@ -816,7 +816,13 @@ func AdminTopUp(c *gin.Context) {
 }
 
 func GetAdminDashboard(c *gin.Context) {
-	stats, err := model.GetUserRegistrationsByDay(30)
+	days := 30
+	if daysStr := c.Query("days"); daysStr != "" {
+		if d, err := strconv.Atoi(daysStr); err == nil && d > 0 && d <= 365 {
+			days = d
+		}
+	}
+	stats, err := model.GetUserRegistrationsByDay(days)
 	if err != nil {
 		c.JSON(http.StatusOK, gin.H{
 			"success": false,

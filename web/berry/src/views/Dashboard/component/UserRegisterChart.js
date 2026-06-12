@@ -1,11 +1,18 @@
 import PropTypes from 'prop-types';
-import { Grid, Typography, Box } from '@mui/material';
+import { Grid, Typography, Box, ToggleButtonGroup, ToggleButton } from '@mui/material';
 import Chart from 'react-apexcharts';
 import MainCard from 'ui-component/cards/MainCard';
 import SkeletonTotalGrowthBarChart from 'ui-component/cards/Skeleton/TotalGrowthBarChart';
 import { gridSpacing } from 'store/constant';
 
-const UserRegisterChart = ({ isLoading, chartData }) => {
+const PERIOD_OPTIONS = [
+  { label: '近7天', value: 7 },
+  { label: '近14天', value: 14 },
+  { label: '近30天', value: 30 },
+  { label: '近90天', value: 90 }
+];
+
+const UserRegisterChart = ({ isLoading, chartData, days, onDaysChange }) => {
   return (
     <>
       {isLoading ? (
@@ -16,7 +23,21 @@ const UserRegisterChart = ({ isLoading, chartData }) => {
             <Grid item xs={12}>
               <Grid container alignItems="center" justifyContent="space-between">
                 <Grid item>
-                  <Typography variant="h3">用户注册趋势（近30天）</Typography>
+                  <Typography variant="h3">用户注册趋势</Typography>
+                </Grid>
+                <Grid item>
+                  <ToggleButtonGroup
+                    value={days}
+                    exclusive
+                    onChange={(_, val) => val && onDaysChange(val)}
+                    size="small"
+                  >
+                    {PERIOD_OPTIONS.map((opt) => (
+                      <ToggleButton key={opt.value} value={opt.value} sx={{ px: 1.5, py: 0.5, fontSize: '0.75rem' }}>
+                        {opt.label}
+                      </ToggleButton>
+                    ))}
+                  </ToggleButtonGroup>
                 </Grid>
               </Grid>
             </Grid>
@@ -40,7 +61,9 @@ const UserRegisterChart = ({ isLoading, chartData }) => {
 
 UserRegisterChart.propTypes = {
   isLoading: PropTypes.bool,
-  chartData: PropTypes.object
+  chartData: PropTypes.object,
+  days: PropTypes.number,
+  onDaysChange: PropTypes.func
 };
 
 export default UserRegisterChart;
