@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react';
-import { Grid, Typography } from '@mui/material';
+import { useEffect, useState, useMemo } from 'react';
+import { Grid, Typography, Box, Collapse, Button, Chip, Checkbox, FormControlLabel, Divider } from '@mui/material';
+import { FilterList, ExpandMore, ExpandLess } from '@mui/icons-material';
 import { gridSpacing } from 'store/constant';
 import StatisticalLineChartCard from './component/StatisticalLineChartCard';
 import StatisticalBarChart from './component/StatisticalBarChart';
@@ -12,6 +13,9 @@ import UserCard from 'ui-component/cards/UserCard';
 
 const Dashboard = () => {
   const [isLoading, setLoading] = useState(true);
+  const [rawDashboardData, setRawDashboardData] = useState([]);
+  const [statsFilterModels, setStatsFilterModels] = useState([]);
+  const [statsFilterOpen, setStatsFilterOpen] = useState(false);
   const [statisticalData, setStatisticalData] = useState([]);
   const [requestChart, setRequestChart] = useState(null);
   const [quotaChart, setQuotaChart] = useState(null);
@@ -26,21 +30,37 @@ const Dashboard = () => {
   const [selectedModels, setSelectedModels] = useState([]);
   const userIsAdmin = isAdmin();
 
+  const applyStatsFilter = (data, models) => {
+    const filtered = models.length > 0 ? data.filter((d) => models.includes(d.ModelName)) : data;
+    let lineData = getLineDataGroup(filtered);
+    setRequestChart(getLineCardOption(lineData, 'RequestCount'));
+    setQuotaChart(getLineCardOption(lineData, 'Quota'));
+    setTokenChart(getLineCardOption(lineData, 'PromptTokens'));
+    setStatisticalData(getBarDataGroup(filtered));
+  };
+
   const userDashboard = async () => {
     const res = await API.get('/api/user/dashboard');
     const { success, message, data } = res.data;
     if (success) {
       if (data) {
-        let lineData = getLineDataGroup(data);
-        setRequestChart(getLineCardOption(lineData, 'RequestCount'));
-        setQuotaChart(getLineCardOption(lineData, 'Quota'));
-        setTokenChart(getLineCardOption(lineData, 'PromptTokens'));
-        setStatisticalData(getBarDataGroup(data));
+        setRawDashboardData(data);
+        applyStatsFilter(data, []);
       }
     } else {
       showError(message);
     }
     setLoading(false);
+  };
+
+  const availableStatsModels = useMemo(
+    () => [...new Set(rawDashboardData.map((d) => d.ModelName).filter(Boolean))].sort(),
+    [rawDashboardData]
+  );
+
+  const handleStatsModelsChange = (models) => {
+    setStatsFilterModels(models);
+    applyStatsFilter(rawDashboardData, models);
   };
 
   const adminDashboard = async (days = 30) => {
@@ -110,6 +130,64 @@ const Dashboard = () => {
 
   return (
     <Grid container spacing={gridSpacing}>
+      {/* 模型筛选条 */}
+      {availableStatsModels.length > 0 && (
+        <Grid item xs={12}>
+          <Box sx={{ background: '#fff', borderRadius: 2, p: 1.5, border: '1px solid #e0e0e0' }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+              <Button
+                size="small"
+                variant={statsFilterOpen ? 'contained' : 'outlined'}
+                startIcon={<FilterList fontSize="small" />}
+                endIcon={statsFilterOpen ? <ExpandLess fontSize="small" /> : <ExpandMore fontSize="small" />}
+                onClick={() => setStatsFilterOpen((v) => !v)}
+                sx={{ fontSize: '0.75rem', py: 0.5, flexShrink: 0 }}
+              >
+                按模型筛选统计
+              </Button>
+              {statsFilterModels.length > 0 ? (
+                <>
+                  {statsFilterModels.map((m) => (
+                    <Chip key={m} label={m} size="small" onDelete={() => handleStatsModelsChange(statsFilterModels.filter((x) => x !== m))}
+                      color="primary" variant="outlined" sx={{ fontSize: '0.7rem', height: 22 }} />
+                  ))}
+                  <Chip label="清除全部" size="small" onClick={() => handleStatsModelsChange([])} sx={{ fontSize: '0.7rem', height: 22 }} />
+                </>
+              ) : (
+                <Typography variant="caption" color="text.secondary">当前统计全部模型</Typography>
+              )}
+            </Box>
+            <Collapse in={statsFilterOpen}>
+              <Divider sx={{ my: 1 }} />
+              <Box sx={{ display: 'flex', gap: 1, mb: 0.5 }}>
+                <Button size="small" sx={{ fontSize: '0.7rem', py: 0, minWidth: 0 }} onClick={() => handleStatsModelsChange([])}>全选</Button>
+                <Button size="small" sx={{ fontSize: '0.7rem', py: 0, minWidth: 0 }} onClick={() => handleStatsModelsChange([...availableStatsModels])}>清除</Button>
+              </Box>
+              <Box sx={{ display: 'flex', flexWrap: 'wrap' }}>
+                {availableStatsModels.map((m) => {
+                  const checked = statsFilterModels.length === 0 || statsFilterModels.includes(m);
+                  return (
+                    <FormControlLabel key={m}
+                      control={<Checkbox size="small" checked={checked} sx={{ py: 0.3 }}
+                        onChange={() => {
+                          if (statsFilterModels.length === 0) {
+                            handleStatsModelsChange(availableStatsModels.filter((x) => x !== m));
+                          } else if (statsFilterModels.includes(m)) {
+                            handleStatsModelsChange(statsFilterModels.filter((x) => x !== m));
+                          } else {
+                            handleStatsModelsChange([...statsFilterModels, m]);
+                          }
+                        }} />}
+                      label={<Typography variant="caption">{m}</Typography>}
+                      sx={{ mr: 1, mb: 0.3 }}
+                    />
+                  );
+                })}
+              </Box>
+            </Collapse>
+          </Box>
+        </Grid>
+      )}
       <Grid item xs={12}>
         <Grid container spacing={gridSpacing}>
           <Grid item lg={4} xs={12}>

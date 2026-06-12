@@ -73,6 +73,8 @@ const Dashboard = () => {
   const [selectedModels, setSelectedModels] = useState([]);
   const [modelList, setModelList] = useState([]);
   const [filterOpen, setFilterOpen] = useState(false);
+  const [statsFilterModels, setStatsFilterModels] = useState([]);
+  const [statsFilterOpen, setStatsFilterOpen] = useState(false);
   const userIsAdmin = isAdmin();
 
   useEffect(() => {
@@ -200,11 +202,11 @@ const Dashboard = () => {
   };
 
   // 处理数据以供折线图使用，补充缺失的日期
-  const processTimeSeriesData = () => {
+  const processTimeSeriesData = (sourceData = data) => {
     const dailyData = {};
 
     // 获取日期范围
-    const dates = data.map((item) => item.Day);
+    const dates = sourceData.map((item) => item.Day);
     const maxDate = new Date(); // 总是使用今天作为最后一天
     let minDate =
       dates.length > 0
@@ -234,7 +236,7 @@ const Dashboard = () => {
     }
 
     // 填充实际数据
-    data.forEach((item) => {
+    sourceData.forEach((item) => {
       if (!dailyData[item.Day]) return;
       dailyData[item.Day].requests += item.RequestCount;
       dailyData[item.Day].quota += item.Quota / 1000000;
@@ -247,11 +249,11 @@ const Dashboard = () => {
   };
 
   // 处理数据以供堆叠柱状图使用
-  const processModelData = () => {
+  const processModelData = (sourceData = data) => {
     const timeData = {};
 
     // 获取日期范围
-    const dates = data.map((item) => item.Day);
+    const dates = sourceData.map((item) => item.Day);
     const maxDate = new Date(); // 总是使用今天作为最后一天
     let minDate =
       dates.length > 0
@@ -277,14 +279,14 @@ const Dashboard = () => {
       };
 
       // 初始化所有模型的数据为0
-      const models = [...new Set(data.map((item) => item.ModelName))];
-      models.forEach((model) => {
+      const allModels = [...new Set(sourceData.map((item) => item.ModelName))];
+      allModels.forEach((model) => {
         timeData[dateStr][model] = 0;
       });
     }
 
     // 填充实际数据
-    data.forEach((item) => {
+    sourceData.forEach((item) => {
       if (!timeData[item.Day]) return;
       timeData[item.Day][item.ModelName] =
         item.PromptTokens + item.CompletionTokens;
@@ -294,13 +296,30 @@ const Dashboard = () => {
   };
 
   // 获取所有唯一的模型名称
-  const getUniqueModels = () => {
-    return [...new Set(data.map((item) => item.ModelName))];
+  const getUniqueModels = (sourceData = data) => {
+    return [...new Set(sourceData.map((item) => item.ModelName))];
   };
 
-  const timeSeriesData = processTimeSeriesData();
-  const modelData = processModelData();
-  const models = getUniqueModels();
+  const filteredDashboardData = statsFilterModels.length > 0
+    ? data.filter((item) => statsFilterModels.includes(item.ModelName))
+    : data;
+  const availableStatsModels = [...new Set(data.map((item) => item.ModelName).filter(Boolean))].sort();
+
+  const timeSeriesData = processTimeSeriesData(filteredDashboardData);
+  const modelData = processModelData(filteredDashboardData);
+  const models = getUniqueModels(filteredDashboardData);
+  const filteredSummary = (() => {
+    if (!Array.isArray(filteredDashboardData) || filteredDashboardData.length === 0) return { todayRequests: 0, todayQuota: 0, todayTokens: 0 };
+    const pad = (n) => String(n).padStart(2, '0');
+    const now = new Date();
+    const today = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+    const todayData = filteredDashboardData.filter((item) => item.Day === today);
+    return {
+      todayRequests: todayData.reduce((sum, item) => sum + item.RequestCount, 0),
+      todayQuota: todayData.reduce((sum, item) => sum + item.Quota, 0) / 1000000,
+      todayTokens: todayData.reduce((sum, item) => sum + item.PromptTokens + item.CompletionTokens, 0),
+    };
+  })();
 
   // 生成随机颜色
   const getRandomColor = (index) => {
@@ -334,6 +353,76 @@ const Dashboard = () => {
 
   return (
     <div className='dashboard-container'>
+      {/* 模型筛选条 */}
+      {availableStatsModels.length > 0 && (
+        <div style={{ marginBottom: '12px', padding: '12px 16px', background: '#fff', borderRadius: '12px', border: '1px solid #e2e8f0', boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+            <button
+              onClick={() => setStatsFilterOpen((v) => !v)}
+              style={{
+                padding: '4px 12px', fontSize: '12px', borderRadius: '6px', cursor: 'pointer',
+                border: '1px solid', borderColor: statsFilterOpen ? '#4318FF' : '#e2e8f0',
+                background: statsFilterOpen ? '#4318FF' : '#fff', color: statsFilterOpen ? '#fff' : '#4a5568',
+                fontWeight: 600, transition: 'all 0.15s', display: 'flex', alignItems: 'center', gap: 4,
+              }}
+            >
+              ☰ 按模型筛选统计 {statsFilterModels.length > 0 && `(已选 ${statsFilterModels.length})`}
+            </button>
+            {statsFilterModels.length > 0 ? (
+              <>
+                {statsFilterModels.map((m) => (
+                  <span key={m} style={{
+                    display: 'inline-flex', alignItems: 'center', gap: 4,
+                    padding: '2px 8px', borderRadius: '12px', background: '#f0edff',
+                    border: '1px solid #4318FF', color: '#4318FF', fontSize: '12px'
+                  }}>
+                    {m}
+                    <span style={{ cursor: 'pointer', fontWeight: 700 }}
+                      onClick={() => setStatsFilterModels(statsFilterModels.filter((x) => x !== m))
+                        || setStatsFilterModels((prev) => { const n = prev.filter((x) => x !== m); /* trigger rerender */ return n; })}>×</span>
+                  </span>
+                ))}
+                <button onClick={() => setStatsFilterModels([])}
+                  style={{ fontSize: '11px', border: 'none', background: 'none', color: '#718096', cursor: 'pointer' }}>清除全部</button>
+              </>
+            ) : (
+              <span style={{ fontSize: '12px', color: '#A3AED0' }}>当前统计全部模型</span>
+            )}
+          </div>
+          {statsFilterOpen && (
+            <div style={{ marginTop: '10px', borderTop: '1px solid #e2e8f0', paddingTop: '10px' }}>
+              <div style={{ display: 'flex', gap: 8, marginBottom: 6 }}>
+                <button onClick={() => setStatsFilterModels([])}
+                  style={{ fontSize: '11px', border: 'none', background: 'none', color: '#4318FF', cursor: 'pointer' }}>全选</button>
+                <button onClick={() => setStatsFilterModels([...availableStatsModels])}
+                  style={{ fontSize: '11px', border: 'none', background: 'none', color: '#718096', cursor: 'pointer' }}>清除</button>
+              </div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                {availableStatsModels.map((m) => {
+                  const checked = statsFilterModels.length === 0 || statsFilterModels.includes(m);
+                  return (
+                    <label key={m} style={{
+                      display: 'inline-flex', alignItems: 'center', gap: 4, padding: '3px 8px',
+                      borderRadius: '12px', border: '1px solid', cursor: 'pointer',
+                      borderColor: checked ? '#4318FF' : '#e2e8f0',
+                      background: checked ? '#f0edff' : '#fff', color: checked ? '#4318FF' : '#718096', fontSize: '12px'
+                    }}>
+                      <input type='checkbox' checked={checked} style={{ margin: 0, width: 12, height: 12 }}
+                        onChange={() => {
+                          if (statsFilterModels.length === 0) setStatsFilterModels(availableStatsModels.filter((x) => x !== m));
+                          else if (statsFilterModels.includes(m)) setStatsFilterModels(statsFilterModels.filter((x) => x !== m));
+                          else setStatsFilterModels([...statsFilterModels, m]);
+                        }} />
+                      {m}
+                    </label>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* 三个并排的折线图 */}
       <Grid columns={3} stackable className='charts-grid'>
         <Grid.Column>
