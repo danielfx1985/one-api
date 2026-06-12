@@ -1,0 +1,49 @@
+---
+description: Prohibit breaking changes to database schema and existing API contracts
+alwaysApply: true
+---
+
+# No Breaking Changes to Database or API
+
+## Hard Rules
+
+**Database**
+- NEVER add, remove, or rename columns in existing tables
+- NEVER change column types or constraints in existing tables
+- NEVER drop or rename existing tables
+- If new data storage is needed, add new tables only
+
+**Existing API Endpoints**
+- NEVER remove or rename existing endpoints
+- NEVER change the meaning or type of existing request/response fields
+- NEVER make previously optional parameters required
+- NEVER change existing authentication/authorization requirements on existing endpoints
+
+## Allowed (Additive Only)
+
+- Add NEW endpoints
+- Add NEW optional query parameters with sensible defaults so old callers are unaffected
+- Add NEW fields to existing JSON responses (clients ignore unknown fields)
+- Add NEW tables to the database
+- Add NEW config/option keys
+
+## Why
+
+Other projects depend on this project's API. Any breaking change will silently break those integrations.
+
+## Examples
+
+```go
+// ✅ OK — new optional param with default, old callers unaffected
+days := 30
+if daysStr := c.Query("days"); daysStr != "" { ... }
+
+// ❌ BAD — renaming existing field breaks clients
+// "token_count" → "total_tokens"
+
+// ✅ OK — add new field alongside existing ones
+gin.H{"existing_field": x, "new_field": y}
+
+// ❌ BAD — ALTER TABLE existing column
+// ALTER TABLE logs MODIFY COLUMN model_name VARCHAR(255) NOT NULL
+```
