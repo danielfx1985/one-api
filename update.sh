@@ -80,6 +80,31 @@ if [ -f "$PROJECT_ROOT/.env" ]; then
     sed -i '/^THEME=/d' "$PROJECT_ROOT/.env"
 fi
 
+# 构建前端静态资源
+if command -v node &> /dev/null && command -v npm &> /dev/null; then
+    print_step "构建前端资源（berry 主题）..."
+    (
+        cd "$PROJECT_ROOT/web/berry"
+        npm ci --prefer-offline 2>/dev/null || npm install
+        npm run build -- --silent 2>/dev/null || npx react-scripts build
+        rm -rf "$PROJECT_ROOT/web/build/berry"
+        mv -f build "$PROJECT_ROOT/web/build/berry"
+    )
+    print_success "berry 主题构建完成"
+
+    print_step "构建前端资源（default 主题）..."
+    (
+        cd "$PROJECT_ROOT/web/default"
+        npm ci --prefer-offline 2>/dev/null || npm install
+        npm run build -- --silent 2>/dev/null || npx react-scripts build
+        rm -rf "$PROJECT_ROOT/web/build/default"
+        mv -f build "$PROJECT_ROOT/web/build/default"
+    )
+    print_success "default 主题构建完成"
+else
+    print_warning "未检测到 Node.js，跳过前端构建（将使用仓库中的预构建文件）"
+fi
+
 # 若存在 .env 则重启容器
 if [ -f "$PROJECT_ROOT/.env" ] && command -v docker &> /dev/null; then
     echo ""
