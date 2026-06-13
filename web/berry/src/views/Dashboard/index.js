@@ -188,6 +188,16 @@ const Dashboard = () => {
           </Box>
         </Grid>
       )}
+      {userIsAdmin && (
+        <Grid item xs={12}>
+          <UserRegisterChart
+            isLoading={registerLoading}
+            chartData={registerChart}
+            days={registerDays}
+            onDaysChange={handleRegisterDaysChange}
+          />
+        </Grid>
+      )}
       <Grid item xs={12}>
         <Grid container spacing={gridSpacing}>
           <Grid item lg={4} xs={12}>
@@ -247,16 +257,6 @@ const Dashboard = () => {
           </Grid>
         </Grid>
       </Grid>
-      {userIsAdmin && (
-        <Grid item xs={12}>
-          <UserRegisterChart
-            isLoading={registerLoading}
-            chartData={registerChart}
-            days={registerDays}
-            onDaysChange={handleRegisterDaysChange}
-          />
-        </Grid>
-      )}
       {userIsAdmin && (
         <Grid item xs={12}>
           <TokenRankingTable

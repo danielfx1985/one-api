@@ -423,6 +423,85 @@ const Dashboard = () => {
         </div>
       )}
 
+      {/* 用户注册趋势（仅管理员可见） */}
+      {userIsAdmin && (
+        <Card fluid className='chart-card'>
+          <Card.Content>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
+              <Card.Header>用户注册趋势</Card.Header>
+              <div style={{ display: 'flex', gap: '4px' }}>
+                {[7, 14, 30, 90, 180].map((d) => (
+                  <button
+                    key={d}
+                    onClick={() => handleRegisterDaysChange(d)}
+                    style={{
+                      padding: '4px 10px',
+                      fontSize: '12px',
+                      border: '1px solid',
+                      borderRadius: '6px',
+                      cursor: 'pointer',
+                      borderColor: registerDays === d ? '#4318FF' : '#e2e8f0',
+                      background: registerDays === d ? '#4318FF' : '#fff',
+                      color: registerDays === d ? '#fff' : '#4a5568',
+                      fontWeight: registerDays === d ? 600 : 400,
+                      transition: 'all 0.15s',
+                    }}
+                  >
+                    {d === 180 ? '近半年' : `近${d}天`}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className='chart-container'>
+              {registerLoading ? (
+                <div style={{ minHeight: '260px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#A3AED0' }}>加载中...</div>
+              ) : (
+              <ResponsiveContainer width='100%' height={260}>
+                <AreaChart data={registerData}>
+                  <defs>
+                    <linearGradient id='regGrad' x1='0' y1='0' x2='0' y2='1'>
+                      <stop offset='5%' stopColor='#4318FF' stopOpacity={0.3} />
+                      <stop offset='95%' stopColor='#4318FF' stopOpacity={0.02} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray='3 3' vertical={false} opacity={0.1} />
+                  <XAxis
+                    dataKey='date'
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fontSize: 12, fill: '#A3AED0' }}
+                    tickFormatter={formatDate}
+                    interval={4}
+                  />
+                  <YAxis
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fontSize: 12, fill: '#A3AED0' }}
+                    allowDecimals={false}
+                  />
+                  <Tooltip
+                    contentStyle={{ background: '#fff', border: 'none', borderRadius: '4px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}
+                    formatter={(value) => [value + ' 人', '注册人数']}
+                    labelFormatter={(label) => `日期: ${label}`}
+                  />
+                  <Area
+                    type='monotone'
+                    dataKey='count'
+                    stroke='#4318FF'
+                    strokeWidth={2}
+                    fill='url(#regGrad)'
+                    dot={false}
+                    activeDot={{ r: 4 }}
+                    name='注册人数'
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+              )}
+            </div>
+          </Card.Content>
+        </Card>
+      )}
+
       {/* 三个并排的折线图 */}
       <Grid columns={3} stackable className='charts-grid'>
         <Grid.Column>
@@ -641,85 +720,6 @@ const Dashboard = () => {
           </div>
         </Card.Content>
       </Card>
-
-      {/* 用户注册趋势（仅管理员可见） */}
-      {userIsAdmin && (
-        <Card fluid className='chart-card'>
-          <Card.Content>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
-              <Card.Header>用户注册趋势</Card.Header>
-              <div style={{ display: 'flex', gap: '4px' }}>
-                {[7, 14, 30, 90, 180].map((d) => (
-                  <button
-                    key={d}
-                    onClick={() => handleRegisterDaysChange(d)}
-                    style={{
-                      padding: '4px 10px',
-                      fontSize: '12px',
-                      border: '1px solid',
-                      borderRadius: '6px',
-                      cursor: 'pointer',
-                      borderColor: registerDays === d ? '#4318FF' : '#e2e8f0',
-                      background: registerDays === d ? '#4318FF' : '#fff',
-                      color: registerDays === d ? '#fff' : '#4a5568',
-                      fontWeight: registerDays === d ? 600 : 400,
-                      transition: 'all 0.15s',
-                    }}
-                  >
-                    {d === 180 ? '近半年' : `近${d}天`}
-                  </button>
-                ))}
-              </div>
-            </div>
-            <div className='chart-container'>
-              {registerLoading ? (
-                <div style={{ minHeight: '260px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#A3AED0' }}>加载中...</div>
-              ) : (
-              <ResponsiveContainer width='100%' height={260}>
-                <AreaChart data={registerData}>
-                  <defs>
-                    <linearGradient id='regGrad' x1='0' y1='0' x2='0' y2='1'>
-                      <stop offset='5%' stopColor='#4318FF' stopOpacity={0.3} />
-                      <stop offset='95%' stopColor='#4318FF' stopOpacity={0.02} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray='3 3' vertical={false} opacity={0.1} />
-                  <XAxis
-                    dataKey='date'
-                    axisLine={false}
-                    tickLine={false}
-                    tick={{ fontSize: 12, fill: '#A3AED0' }}
-                    tickFormatter={formatDate}
-                    interval={4}
-                  />
-                  <YAxis
-                    axisLine={false}
-                    tickLine={false}
-                    tick={{ fontSize: 12, fill: '#A3AED0' }}
-                    allowDecimals={false}
-                  />
-                  <Tooltip
-                    contentStyle={{ background: '#fff', border: 'none', borderRadius: '4px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}
-                    formatter={(value) => [value + ' 人', '注册人数']}
-                    labelFormatter={(label) => `日期: ${label}`}
-                  />
-                  <Area
-                    type='monotone'
-                    dataKey='count'
-                    stroke='#4318FF'
-                    strokeWidth={2}
-                    fill='url(#regGrad)'
-                    dot={false}
-                    activeDot={{ r: 4 }}
-                    name='注册人数'
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
-              )}
-            </div>
-          </Card.Content>
-        </Card>
-      )}
 
       {/* Token 用量排行（仅管理员可见） */}
       {userIsAdmin && (
