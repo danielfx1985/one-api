@@ -35,6 +35,7 @@ var MaxRecentItems = 100
 var PasswordLoginEnabled = true
 var PasswordRegisterEnabled = true
 var EmailVerificationEnabled = false
+var PhoneVerificationEnabled = false
 var GitHubOAuthEnabled = false
 var OidcEnabled = false
 var WeChatAuthEnabled = false
@@ -65,6 +66,15 @@ var SMTPPort = 587
 var SMTPAccount = ""
 var SMTPFrom = ""
 var SMTPToken = ""
+
+var AliyunSmsAccessKeyId = ""
+var AliyunSmsAccessKeySecret = ""
+var AliyunSmsSignName = ""
+var AliyunSmsTemplateCode = ""
+var AliyunSmsTemplateParam = `{"code":"##code##","min":"5"}`
+var AliyunSmsCountryCode = "86"
+var AliyunSmsSchemeName = ""
+var PhoneEmailDomain = "phone.local"
 
 var GitHubClientId = ""
 var GitHubClientSecret = ""

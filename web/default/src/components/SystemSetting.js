@@ -17,6 +17,7 @@ const SystemSetting = () => {
     PasswordLoginEnabled: '',
     PasswordRegisterEnabled: '',
     EmailVerificationEnabled: '',
+    PhoneVerificationEnabled: '',
     GitHubOAuthEnabled: '',
     GitHubClientId: '',
     GitHubClientSecret: '',
@@ -28,6 +29,12 @@ const SystemSetting = () => {
     SMTPAccount: '',
     SMTPFrom: '',
     SMTPToken: '',
+    AliyunSmsAccessKeyId: '',
+    AliyunSmsAccessKeySecret: '',
+    AliyunSmsSignName: '',
+    AliyunSmsTemplateCode: '',
+    AliyunSmsTemplateParam: '',
+    AliyunSmsCountryCode: '',
     ServerAddress: '',
     Footer: '',
     WeChatAuthEnabled: '',
@@ -84,6 +91,7 @@ const SystemSetting = () => {
       case 'PasswordLoginEnabled':
       case 'PasswordRegisterEnabled':
       case 'EmailVerificationEnabled':
+      case 'PhoneVerificationEnabled':
       case 'GitHubOAuthEnabled':
       case 'WeChatAuthEnabled':
       case 'TurnstileCheckEnabled':
@@ -122,6 +130,7 @@ const SystemSetting = () => {
     if (
       name === 'Notice' ||
       name.startsWith('SMTP') ||
+      name.startsWith('AliyunSms') ||
       name === 'ServerAddress' ||
       name === 'GitHubClientId' ||
       name === 'GitHubClientSecret' ||
@@ -166,6 +175,47 @@ const SystemSetting = () => {
       inputs.SMTPToken !== ''
     ) {
       await updateOption('SMTPToken', inputs.SMTPToken);
+    }
+  };
+
+  const submitAliyunSms = async () => {
+    if (originInputs['AliyunSmsAccessKeyId'] !== inputs.AliyunSmsAccessKeyId) {
+      await updateOption('AliyunSmsAccessKeyId', inputs.AliyunSmsAccessKeyId);
+    }
+    if (
+      originInputs['AliyunSmsAccessKeySecret'] !==
+        inputs.AliyunSmsAccessKeySecret &&
+      inputs.AliyunSmsAccessKeySecret !== ''
+    ) {
+      await updateOption(
+        'AliyunSmsAccessKeySecret',
+        inputs.AliyunSmsAccessKeySecret
+      );
+    }
+    if (originInputs['AliyunSmsSignName'] !== inputs.AliyunSmsSignName) {
+      await updateOption('AliyunSmsSignName', inputs.AliyunSmsSignName);
+    }
+    if (
+      originInputs['AliyunSmsTemplateCode'] !== inputs.AliyunSmsTemplateCode
+    ) {
+      await updateOption(
+        'AliyunSmsTemplateCode',
+        inputs.AliyunSmsTemplateCode
+      );
+    }
+    if (
+      originInputs['AliyunSmsTemplateParam'] !== inputs.AliyunSmsTemplateParam
+    ) {
+      await updateOption(
+        'AliyunSmsTemplateParam',
+        inputs.AliyunSmsTemplateParam
+      );
+    }
+    if (originInputs['AliyunSmsCountryCode'] !== inputs.AliyunSmsCountryCode) {
+      await updateOption(
+        'AliyunSmsCountryCode',
+        inputs.AliyunSmsCountryCode
+      );
     }
   };
 
@@ -349,6 +399,12 @@ const SystemSetting = () => {
               onChange={handleInputChange}
             />
             <Form.Checkbox
+              checked={inputs.PhoneVerificationEnabled === 'true'}
+              label={t('setting.system.login.phone_verification')}
+              name='PhoneVerificationEnabled'
+              onChange={handleInputChange}
+            />
+            <Form.Checkbox
               checked={inputs.GitHubOAuthEnabled === 'true'}
               label={t('setting.system.login.github_oauth')}
               name='GitHubOAuthEnabled'
@@ -497,6 +553,72 @@ const SystemSetting = () => {
           </Form.Group>
           <Form.Button onClick={submitSMTP}>
             {t('setting.system.smtp.buttons.save')}
+          </Form.Button>
+
+          <Divider />
+          <Header as='h3'>{t('setting.system.aliyun_sms.title')}</Header>
+          <Message>{t('setting.system.aliyun_sms.subtitle')}</Message>
+          <Form.Group widths={3}>
+            <Form.Input
+              label={t('setting.system.aliyun_sms.access_key_id')}
+              placeholder={t(
+                'setting.system.aliyun_sms.access_key_id_placeholder'
+              )}
+              name='AliyunSmsAccessKeyId'
+              onChange={handleInputChange}
+              value={inputs.AliyunSmsAccessKeyId}
+            />
+            <Form.Input
+              label={t('setting.system.aliyun_sms.access_key_secret')}
+              placeholder={t(
+                'setting.system.aliyun_sms.access_key_secret_placeholder'
+              )}
+              name='AliyunSmsAccessKeySecret'
+              onChange={handleInputChange}
+              type='password'
+              value={inputs.AliyunSmsAccessKeySecret}
+            />
+            <Form.Input
+              label={t('setting.system.aliyun_sms.sign_name')}
+              placeholder={t(
+                'setting.system.aliyun_sms.sign_name_placeholder'
+              )}
+              name='AliyunSmsSignName'
+              onChange={handleInputChange}
+              value={inputs.AliyunSmsSignName}
+            />
+          </Form.Group>
+          <Form.Group widths={3}>
+            <Form.Input
+              label={t('setting.system.aliyun_sms.template_code')}
+              placeholder={t(
+                'setting.system.aliyun_sms.template_code_placeholder'
+              )}
+              name='AliyunSmsTemplateCode'
+              onChange={handleInputChange}
+              value={inputs.AliyunSmsTemplateCode}
+            />
+            <Form.Input
+              label={t('setting.system.aliyun_sms.template_param')}
+              placeholder={t(
+                'setting.system.aliyun_sms.template_param_placeholder'
+              )}
+              name='AliyunSmsTemplateParam'
+              onChange={handleInputChange}
+              value={inputs.AliyunSmsTemplateParam}
+            />
+            <Form.Input
+              label={t('setting.system.aliyun_sms.country_code')}
+              placeholder={t(
+                'setting.system.aliyun_sms.country_code_placeholder'
+              )}
+              name='AliyunSmsCountryCode'
+              onChange={handleInputChange}
+              value={inputs.AliyunSmsCountryCode}
+            />
+          </Form.Group>
+          <Form.Button onClick={submitAliyunSms}>
+            {t('setting.system.aliyun_sms.buttons.save')}
           </Form.Button>
 
           <Divider />

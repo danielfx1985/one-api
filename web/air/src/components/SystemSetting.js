@@ -7,6 +7,7 @@ const SystemSetting = () => {
     PasswordLoginEnabled: '',
     PasswordRegisterEnabled: '',
     EmailVerificationEnabled: '',
+    PhoneVerificationEnabled: '',
     GitHubOAuthEnabled: '',
     GitHubClientId: '',
     GitHubClientSecret: '',
@@ -16,6 +17,12 @@ const SystemSetting = () => {
     SMTPAccount: '',
     SMTPFrom: '',
     SMTPToken: '',
+    AliyunSmsAccessKeyId: '',
+    AliyunSmsAccessKeySecret: '',
+    AliyunSmsSignName: '',
+    AliyunSmsTemplateCode: '',
+    AliyunSmsTemplateParam: '',
+    AliyunSmsCountryCode: '',
     ServerAddress: '',
     Footer: '',
     WeChatAuthEnabled: '',
@@ -69,6 +76,7 @@ const SystemSetting = () => {
       case 'PasswordLoginEnabled':
       case 'PasswordRegisterEnabled':
       case 'EmailVerificationEnabled':
+      case 'PhoneVerificationEnabled':
       case 'GitHubOAuthEnabled':
       case 'WeChatAuthEnabled':
       case 'TurnstileCheckEnabled':
@@ -106,6 +114,7 @@ const SystemSetting = () => {
     if (
       name === 'Notice' ||
       name.startsWith('SMTP') ||
+      name.startsWith('AliyunSms') ||
       name === 'ServerAddress' ||
       name === 'GitHubClientId' ||
       name === 'GitHubClientSecret' ||
@@ -148,6 +157,30 @@ const SystemSetting = () => {
       inputs.SMTPToken !== ''
     ) {
       await updateOption('SMTPToken', inputs.SMTPToken);
+    }
+  };
+
+  const submitAliyunSms = async () => {
+    if (originInputs['AliyunSmsAccessKeyId'] !== inputs.AliyunSmsAccessKeyId) {
+      await updateOption('AliyunSmsAccessKeyId', inputs.AliyunSmsAccessKeyId);
+    }
+    if (
+      originInputs['AliyunSmsAccessKeySecret'] !== inputs.AliyunSmsAccessKeySecret &&
+      inputs.AliyunSmsAccessKeySecret !== ''
+    ) {
+      await updateOption('AliyunSmsAccessKeySecret', inputs.AliyunSmsAccessKeySecret);
+    }
+    if (originInputs['AliyunSmsSignName'] !== inputs.AliyunSmsSignName) {
+      await updateOption('AliyunSmsSignName', inputs.AliyunSmsSignName);
+    }
+    if (originInputs['AliyunSmsTemplateCode'] !== inputs.AliyunSmsTemplateCode) {
+      await updateOption('AliyunSmsTemplateCode', inputs.AliyunSmsTemplateCode);
+    }
+    if (originInputs['AliyunSmsTemplateParam'] !== inputs.AliyunSmsTemplateParam) {
+      await updateOption('AliyunSmsTemplateParam', inputs.AliyunSmsTemplateParam);
+    }
+    if (originInputs['AliyunSmsCountryCode'] !== inputs.AliyunSmsCountryCode) {
+      await updateOption('AliyunSmsCountryCode', inputs.AliyunSmsCountryCode);
     }
   };
 
@@ -305,6 +338,12 @@ const SystemSetting = () => {
               onChange={handleInputChange}
             />
             <Form.Checkbox
+              checked={inputs.PhoneVerificationEnabled === 'true'}
+              label='通过密码注册时需要进行手机号验证'
+              name='PhoneVerificationEnabled'
+              onChange={handleInputChange}
+            />
+            <Form.Checkbox
               checked={inputs.GitHubOAuthEnabled === 'true'}
               label='允许通过 GitHub 账户登录 & 注册'
               name='GitHubOAuthEnabled'
@@ -430,6 +469,65 @@ const SystemSetting = () => {
             />
           </Form.Group>
           <Form.Button onClick={submitSMTP}>保存 SMTP 设置</Form.Button>
+          <Divider />
+          <Header as='h3'>
+            配置阿里云短信
+            <Header.Subheader>用以支持手机号验证注册，需在阿里云控制台开通号码认证服务（Dypnsapi）</Header.Subheader>
+          </Header>
+          <Form.Group widths={3}>
+            <Form.Input
+              label='AccessKey ID'
+              name='AliyunSmsAccessKeyId'
+              onChange={handleInputChange}
+              autoComplete='new-password'
+              value={inputs.AliyunSmsAccessKeyId}
+              placeholder='阿里云 AccessKey ID'
+            />
+            <Form.Input
+              label='AccessKey Secret'
+              name='AliyunSmsAccessKeySecret'
+              onChange={handleInputChange}
+              type='password'
+              autoComplete='new-password'
+              value={inputs.AliyunSmsAccessKeySecret}
+              placeholder='敏感信息不会发送到前端显示'
+            />
+            <Form.Input
+              label='短信签名'
+              name='AliyunSmsSignName'
+              onChange={handleInputChange}
+              autoComplete='new-password'
+              value={inputs.AliyunSmsSignName}
+              placeholder='在阿里云短信控制台配置的签名'
+            />
+          </Form.Group>
+          <Form.Group widths={3}>
+            <Form.Input
+              label='短信模板 Code'
+              name='AliyunSmsTemplateCode'
+              onChange={handleInputChange}
+              autoComplete='new-password'
+              value={inputs.AliyunSmsTemplateCode}
+              placeholder='例如：100001'
+            />
+            <Form.Input
+              label='短信模板参数'
+              name='AliyunSmsTemplateParam'
+              onChange={handleInputChange}
+              autoComplete='new-password'
+              value={inputs.AliyunSmsTemplateParam}
+              placeholder='默认: {"code":"##code##","min":"5"}'
+            />
+            <Form.Input
+              label='国家码'
+              name='AliyunSmsCountryCode'
+              onChange={handleInputChange}
+              autoComplete='new-password'
+              value={inputs.AliyunSmsCountryCode}
+              placeholder='默认: 86'
+            />
+          </Form.Group>
+          <Form.Button onClick={submitAliyunSms}>保存阿里云短信设置</Form.Button>
           <Divider />
           <Header as='h3'>
             配置 GitHub OAuth App

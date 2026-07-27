@@ -8,6 +8,7 @@ import (
 	"github.com/songquanpeng/one-api/common/config"
 	"github.com/songquanpeng/one-api/common/helper"
 	"github.com/songquanpeng/one-api/common/i18n"
+	"github.com/songquanpeng/one-api/common/sms"
 	"github.com/songquanpeng/one-api/model"
 
 	"github.com/gin-gonic/gin"
@@ -68,6 +69,31 @@ func UpdateOption(c *gin.Context) {
 				"message": "无法启用邮箱域名限制，请先填入限制的邮箱域名！",
 			})
 			return
+		}
+	case "EmailVerificationEnabled":
+		if option.Value == "true" && config.PhoneVerificationEnabled {
+			c.JSON(http.StatusOK, gin.H{
+				"success": false,
+				"message": "无法启用邮箱验证，请先关闭手机号验证！",
+			})
+			return
+		}
+	case "PhoneVerificationEnabled":
+		if option.Value == "true" {
+			if config.EmailVerificationEnabled {
+				c.JSON(http.StatusOK, gin.H{
+					"success": false,
+					"message": "无法启用手机号验证，请先关闭邮箱验证！",
+				})
+				return
+			}
+			if !sms.Configured() {
+				c.JSON(http.StatusOK, gin.H{
+					"success": false,
+					"message": "无法启用手机号验证，请先完整填入阿里云短信相关配置信息！",
+				})
+				return
+			}
 		}
 	case "WeChatAuthEnabled":
 		if option.Value == "true" && config.WeChatServerAddress == "" {

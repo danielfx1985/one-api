@@ -27,6 +27,7 @@ func InitOptionMap() {
 	config.OptionMap["PasswordLoginEnabled"] = strconv.FormatBool(config.PasswordLoginEnabled)
 	config.OptionMap["PasswordRegisterEnabled"] = strconv.FormatBool(config.PasswordRegisterEnabled)
 	config.OptionMap["EmailVerificationEnabled"] = strconv.FormatBool(config.EmailVerificationEnabled)
+	config.OptionMap["PhoneVerificationEnabled"] = strconv.FormatBool(config.PhoneVerificationEnabled)
 	config.OptionMap["GitHubOAuthEnabled"] = strconv.FormatBool(config.GitHubOAuthEnabled)
 	config.OptionMap["OidcEnabled"] = strconv.FormatBool(config.OidcEnabled)
 	config.OptionMap["WeChatAuthEnabled"] = strconv.FormatBool(config.WeChatAuthEnabled)
@@ -46,6 +47,14 @@ func InitOptionMap() {
 	config.OptionMap["SMTPPort"] = strconv.Itoa(config.SMTPPort)
 	config.OptionMap["SMTPAccount"] = ""
 	config.OptionMap["SMTPToken"] = ""
+	config.OptionMap["AliyunSmsAccessKeyId"] = ""
+	config.OptionMap["AliyunSmsAccessKeySecret"] = ""
+	config.OptionMap["AliyunSmsSignName"] = config.AliyunSmsSignName
+	config.OptionMap["AliyunSmsTemplateCode"] = config.AliyunSmsTemplateCode
+	config.OptionMap["AliyunSmsTemplateParam"] = config.AliyunSmsTemplateParam
+	config.OptionMap["AliyunSmsCountryCode"] = config.AliyunSmsCountryCode
+	config.OptionMap["AliyunSmsSchemeName"] = config.AliyunSmsSchemeName
+	config.OptionMap["PhoneEmailDomain"] = config.PhoneEmailDomain
 	config.OptionMap["Notice"] = ""
 	config.OptionMap["About"] = ""
 	config.OptionMap["HomePageContent"] = ""
@@ -130,6 +139,8 @@ func updateOptionMap(key string, value string) (err error) {
 			config.PasswordLoginEnabled = boolValue
 		case "EmailVerificationEnabled":
 			config.EmailVerificationEnabled = boolValue
+		case "PhoneVerificationEnabled":
+			config.PhoneVerificationEnabled = boolValue
 		case "GitHubOAuthEnabled":
 			config.GitHubOAuthEnabled = boolValue
 		case "OidcEnabled":
@@ -170,6 +181,22 @@ func updateOptionMap(key string, value string) (err error) {
 		config.SMTPFrom = value
 	case "SMTPToken":
 		config.SMTPToken = value
+	case "AliyunSmsAccessKeyId":
+		config.AliyunSmsAccessKeyId = value
+	case "AliyunSmsAccessKeySecret":
+		config.AliyunSmsAccessKeySecret = value
+	case "AliyunSmsSignName":
+		config.AliyunSmsSignName = value
+	case "AliyunSmsTemplateCode":
+		config.AliyunSmsTemplateCode = value
+	case "AliyunSmsTemplateParam":
+		config.AliyunSmsTemplateParam = value
+	case "AliyunSmsCountryCode":
+		config.AliyunSmsCountryCode = value
+	case "AliyunSmsSchemeName":
+		config.AliyunSmsSchemeName = value
+	case "PhoneEmailDomain":
+		config.PhoneEmailDomain = value
 	case "ServerAddress":
 		config.ServerAddress = value
 	case "GitHubClientId":

@@ -44,7 +44,8 @@ type User struct {
 	WeChatId         string `json:"wechat_id" gorm:"column:wechat_id;index"`
 	LarkId           string `json:"lark_id" gorm:"column:lark_id;index"`
 	OidcId           string `json:"oidc_id" gorm:"column:oidc_id;index"`
-	VerificationCode string `json:"verification_code" gorm:"-:all"`                                    // this field is only for Email verification, don't save it to database!
+	VerificationCode string `json:"verification_code" gorm:"-:all"`                                    // this field is only for Email/Phone verification, don't save it to database!
+	Phone            string `json:"phone" gorm:"-:all"`                                                // this field is only for Phone verification, don't save it to database!
 	AccessToken      string `json:"access_token" gorm:"type:char(32);column:access_token;uniqueIndex"` // this token is for system management
 	Quota            int64  `json:"quota" gorm:"bigint;default:0"`
 	UsedQuota        int64  `json:"used_quota" gorm:"bigint;default:0;column:used_quota"` // used quota

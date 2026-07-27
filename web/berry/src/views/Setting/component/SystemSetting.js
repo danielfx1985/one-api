@@ -28,6 +28,7 @@ const SystemSetting = () => {
     PasswordLoginEnabled: '',
     PasswordRegisterEnabled: '',
     EmailVerificationEnabled: '',
+    PhoneVerificationEnabled: '',
     GitHubOAuthEnabled: '',
     GitHubClientId: '',
     GitHubClientSecret: '',
@@ -46,6 +47,12 @@ const SystemSetting = () => {
     SMTPAccount: '',
     SMTPFrom: '',
     SMTPToken: '',
+    AliyunSmsAccessKeyId: '',
+    AliyunSmsAccessKeySecret: '',
+    AliyunSmsSignName: '',
+    AliyunSmsTemplateCode: '',
+    AliyunSmsTemplateParam: '',
+    AliyunSmsCountryCode: '',
     ServerAddress: '',
     Footer: '',
     WeChatAuthEnabled: '',
@@ -96,6 +103,7 @@ const SystemSetting = () => {
       case 'PasswordLoginEnabled':
       case 'PasswordRegisterEnabled':
       case 'EmailVerificationEnabled':
+      case 'PhoneVerificationEnabled':
       case 'GitHubOAuthEnabled':
       case 'WeChatAuthEnabled':
       case 'TurnstileCheckEnabled':
@@ -138,6 +146,7 @@ const SystemSetting = () => {
     if (
       name === 'Notice' ||
       name.startsWith('SMTP') ||
+      name.startsWith('AliyunSms') ||
       name === 'ServerAddress' ||
       name === 'GitHubClientId' ||
       name === 'GitHubClientSecret' ||
@@ -185,6 +194,27 @@ const SystemSetting = () => {
     }
     if (originInputs['SMTPToken'] !== inputs.SMTPToken && inputs.SMTPToken !== '') {
       await updateOption('SMTPToken', inputs.SMTPToken);
+    }
+  };
+
+  const submitAliyunSms = async () => {
+    if (originInputs['AliyunSmsAccessKeyId'] !== inputs.AliyunSmsAccessKeyId) {
+      await updateOption('AliyunSmsAccessKeyId', inputs.AliyunSmsAccessKeyId);
+    }
+    if (originInputs['AliyunSmsAccessKeySecret'] !== inputs.AliyunSmsAccessKeySecret && inputs.AliyunSmsAccessKeySecret !== '') {
+      await updateOption('AliyunSmsAccessKeySecret', inputs.AliyunSmsAccessKeySecret);
+    }
+    if (originInputs['AliyunSmsSignName'] !== inputs.AliyunSmsSignName) {
+      await updateOption('AliyunSmsSignName', inputs.AliyunSmsSignName);
+    }
+    if (originInputs['AliyunSmsTemplateCode'] !== inputs.AliyunSmsTemplateCode) {
+      await updateOption('AliyunSmsTemplateCode', inputs.AliyunSmsTemplateCode);
+    }
+    if (originInputs['AliyunSmsTemplateParam'] !== inputs.AliyunSmsTemplateParam) {
+      await updateOption('AliyunSmsTemplateParam', inputs.AliyunSmsTemplateParam);
+    }
+    if (originInputs['AliyunSmsCountryCode'] !== inputs.AliyunSmsCountryCode) {
+      await updateOption('AliyunSmsCountryCode', inputs.AliyunSmsCountryCode);
     }
   };
 
@@ -333,6 +363,18 @@ const SystemSetting = () => {
                     checked={inputs.EmailVerificationEnabled === 'true'}
                     onChange={handleInputChange}
                     name="EmailVerificationEnabled"
+                  />
+                }
+              />
+            </Grid>
+            <Grid xs={12} md={3}>
+              <FormControlLabel
+                label="通过密码注册时需要进行手机号验证"
+                control={
+                  <Checkbox
+                    checked={inputs.PhoneVerificationEnabled === 'true'}
+                    onChange={handleInputChange}
+                    name="PhoneVerificationEnabled"
                   />
                 }
               />
@@ -498,6 +540,100 @@ const SystemSetting = () => {
             <Grid xs={12}>
               <Button variant="contained" onClick={submitSMTP}>
                 保存 SMTP 设置
+              </Button>
+            </Grid>
+          </Grid>
+        </SubCard>
+        <SubCard title="配置阿里云短信" subTitle="用以支持手机号验证注册，需在阿里云控制台开通号码认证服务（Dypnsapi）">
+          <Grid container spacing={{ xs: 3, sm: 2, md: 4 }}>
+            <Grid xs={12} md={4}>
+              <FormControl fullWidth>
+                <InputLabel htmlFor="AliyunSmsAccessKeyId">AccessKey ID</InputLabel>
+                <OutlinedInput
+                  id="AliyunSmsAccessKeyId"
+                  name="AliyunSmsAccessKeyId"
+                  value={inputs.AliyunSmsAccessKeyId || ''}
+                  onChange={handleInputChange}
+                  label="AccessKey ID"
+                  placeholder="阿里云 AccessKey ID"
+                  disabled={loading}
+                />
+              </FormControl>
+            </Grid>
+            <Grid xs={12} md={4}>
+              <FormControl fullWidth>
+                <InputLabel htmlFor="AliyunSmsAccessKeySecret">AccessKey Secret</InputLabel>
+                <OutlinedInput
+                  id="AliyunSmsAccessKeySecret"
+                  name="AliyunSmsAccessKeySecret"
+                  type="password"
+                  value={inputs.AliyunSmsAccessKeySecret || ''}
+                  onChange={handleInputChange}
+                  label="AccessKey Secret"
+                  placeholder="敏感信息不会发送到前端显示"
+                  disabled={loading}
+                />
+              </FormControl>
+            </Grid>
+            <Grid xs={12} md={4}>
+              <FormControl fullWidth>
+                <InputLabel htmlFor="AliyunSmsSignName">短信签名</InputLabel>
+                <OutlinedInput
+                  id="AliyunSmsSignName"
+                  name="AliyunSmsSignName"
+                  value={inputs.AliyunSmsSignName || ''}
+                  onChange={handleInputChange}
+                  label="短信签名"
+                  placeholder="在阿里云短信控制台配置的签名"
+                  disabled={loading}
+                />
+              </FormControl>
+            </Grid>
+            <Grid xs={12} md={4}>
+              <FormControl fullWidth>
+                <InputLabel htmlFor="AliyunSmsTemplateCode">短信模板 Code</InputLabel>
+                <OutlinedInput
+                  id="AliyunSmsTemplateCode"
+                  name="AliyunSmsTemplateCode"
+                  value={inputs.AliyunSmsTemplateCode || ''}
+                  onChange={handleInputChange}
+                  label="短信模板 Code"
+                  placeholder="例如：100001"
+                  disabled={loading}
+                />
+              </FormControl>
+            </Grid>
+            <Grid xs={12} md={4}>
+              <FormControl fullWidth>
+                <InputLabel htmlFor="AliyunSmsTemplateParam">短信模板参数</InputLabel>
+                <OutlinedInput
+                  id="AliyunSmsTemplateParam"
+                  name="AliyunSmsTemplateParam"
+                  value={inputs.AliyunSmsTemplateParam || ''}
+                  onChange={handleInputChange}
+                  label="短信模板参数"
+                  placeholder='默认: {"code":"##code##","min":"5"}'
+                  disabled={loading}
+                />
+              </FormControl>
+            </Grid>
+            <Grid xs={12} md={4}>
+              <FormControl fullWidth>
+                <InputLabel htmlFor="AliyunSmsCountryCode">国家码</InputLabel>
+                <OutlinedInput
+                  id="AliyunSmsCountryCode"
+                  name="AliyunSmsCountryCode"
+                  value={inputs.AliyunSmsCountryCode || ''}
+                  onChange={handleInputChange}
+                  label="国家码"
+                  placeholder="默认: 86"
+                  disabled={loading}
+                />
+              </FormControl>
+            </Grid>
+            <Grid xs={12}>
+              <Button variant="contained" onClick={submitAliyunSms}>
+                保存阿里云短信设置
               </Button>
             </Grid>
           </Grid>

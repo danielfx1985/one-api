@@ -16,6 +16,7 @@ import (
 	"github.com/songquanpeng/one-api/common/ctxkey"
 	"github.com/songquanpeng/one-api/common/i18n"
 	"github.com/songquanpeng/one-api/common/random"
+	"github.com/songquanpeng/one-api/common/sms"
 	"github.com/songquanpeng/one-api/model"
 )
 
@@ -159,6 +160,36 @@ func Register(c *gin.Context) {
 			return
 		}
 	}
+	if config.PhoneVerificationEnabled {
+		if user.Phone == "" || user.VerificationCode == "" {
+			c.JSON(http.StatusOK, gin.H{
+				"success": false,
+				"message": "管理员开启了手机号验证，请输入手机号和验证码",
+			})
+			return
+		}
+		if !sms.IsValidCnMobile(user.Phone) {
+			c.JSON(http.StatusOK, gin.H{
+				"success": false,
+				"message": "手机号格式不正确",
+			})
+			return
+		}
+		if model.IsEmailAlreadyTaken(sms.PhoneToPlaceholderEmail(user.Phone)) {
+			c.JSON(http.StatusOK, gin.H{
+				"success": false,
+				"message": "该手机号已被注册",
+			})
+			return
+		}
+		if err := sms.CheckVerifyCode(user.Phone, user.VerificationCode); err != nil {
+			c.JSON(http.StatusOK, gin.H{
+				"success": false,
+				"message": err.Error(),
+			})
+			return
+		}
+	}
 	affCode := user.AffCode // this code is the inviter's code, not the user's own code
 	inviterId, _ := model.GetUserIdByAffCode(affCode)
 	cleanUser := model.User{
@@ -169,6 +200,9 @@ func Register(c *gin.Context) {
 	}
 	if config.EmailVerificationEnabled {
 		cleanUser.Email = user.Email
+	}
+	if config.PhoneVerificationEnabled {
+		cleanUser.Email = sms.PhoneToPlaceholderEmail(user.Phone)
 	}
 	if err := cleanUser.Insert(ctx, inviterId); err != nil {
 		c.JSON(http.StatusOK, gin.H{

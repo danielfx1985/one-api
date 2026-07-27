@@ -501,6 +501,7 @@
         "password_login": "Allow Password Login",
         "password_register": "Allow Password Registration",
         "email_verification": "Require Email Verification for Password Registration",
+        "phone_verification": "Require Phone Verification for Password Registration",
         "github_oauth": "Allow GitHub OAuth Login & Registration",
         "wechat_login": "Allow WeChat Login & Registration",
         "registration": "Allow New User Registration (When disabled, new users cannot register by any means)",
@@ -533,6 +534,25 @@
         "token_placeholder": "Sensitive information will not be sent to frontend",
         "buttons": {
           "save": "Save SMTP Settings"
+        }
+      },
+      "aliyun_sms": {
+        "title": "Aliyun SMS Configuration",
+        "subtitle": "Used to support phone-verified registration. Requires the Dypnsapi (Number Authentication) service enabled in the Aliyun console",
+        "access_key_id": "AccessKey ID",
+        "access_key_id_placeholder": "Aliyun AccessKey ID",
+        "access_key_secret": "AccessKey Secret",
+        "access_key_secret_placeholder": "Sensitive information will not be sent to frontend",
+        "sign_name": "SMS Sign Name",
+        "sign_name_placeholder": "Sign name configured in the Aliyun SMS console",
+        "template_code": "SMS Template Code",
+        "template_code_placeholder": "e.g.: 100001",
+        "template_param": "SMS Template Param",
+        "template_param_placeholder": "Default: {\"code\":\"##code##\",\"min\":\"5\"}",
+        "country_code": "Country Code",
+        "country_code_placeholder": "Default: 86",
+        "buttons": {
+          "save": "Save Aliyun SMS Settings"
         }
       },
       "github": {

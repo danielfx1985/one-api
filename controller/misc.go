@@ -10,6 +10,7 @@ import (
 	"github.com/songquanpeng/one-api/common/config"
 	"github.com/songquanpeng/one-api/common/i18n"
 	"github.com/songquanpeng/one-api/common/message"
+	"github.com/songquanpeng/one-api/common/sms"
 	"github.com/songquanpeng/one-api/model"
 
 	"github.com/gin-gonic/gin"
@@ -23,6 +24,7 @@ func GetStatus(c *gin.Context) {
 			"version":                     common.Version,
 			"start_time":                  common.StartTime,
 			"email_verification":          config.EmailVerificationEnabled,
+			"phone_verification":          config.PhoneVerificationEnabled,
 			"github_oauth":                config.GitHubOAuthEnabled,
 			"github_client_id":            config.GitHubClientId,
 			"lark_client_id":              config.LarkClientId,
@@ -130,6 +132,36 @@ func SendEmailVerification(c *gin.Context) {
 	)
 	err := message.SendEmail(subject, email, content)
 	if err != nil {
+		c.JSON(http.StatusOK, gin.H{
+			"success": false,
+			"message": err.Error(),
+		})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"message": "",
+	})
+	return
+}
+
+func SendSmsVerification(c *gin.Context) {
+	phone := c.Query("phone")
+	if !sms.IsValidCnMobile(phone) {
+		c.JSON(http.StatusOK, gin.H{
+			"success": false,
+			"message": "手机号格式不正确",
+		})
+		return
+	}
+	if model.IsEmailAlreadyTaken(sms.PhoneToPlaceholderEmail(phone)) {
+		c.JSON(http.StatusOK, gin.H{
+			"success": false,
+			"message": "该手机号已被注册",
+		})
+		return
+	}
+	if err := sms.SendVerifyCode(phone); err != nil {
 		c.JSON(http.StatusOK, gin.H{
 			"success": false,
 			"message": err.Error(),
