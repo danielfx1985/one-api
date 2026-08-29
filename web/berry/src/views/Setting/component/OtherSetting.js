@@ -30,6 +30,17 @@ const OtherSetting = () => {
     Theme: '',
   });
   let [loading, setLoading] = useState(false);
+  const [broadcast, setBroadcast] = useState({
+    subject: '',
+    content: '',
+    test_email: ''
+  });
+  const [broadcastMeta, setBroadcastMeta] = useState({
+    recipient_count: 0,
+    smtp_configured: false,
+    sending: false
+  });
+  const [broadcastLoading, setBroadcastLoading] = useState(false);
   const [showUpdateModal, setShowUpdateModal] = useState(false);
   const [updateData, setUpdateData] = useState({
     tag_name: '',
@@ -52,9 +63,69 @@ const OtherSetting = () => {
     }
   };
 
+  const loadBroadcastMeta = async () => {
+    const res = await API.get('/api/user/admin/broadcast-email');
+    const { success, message, data } = res.data;
+    if (success) {
+      setBroadcastMeta({
+        recipient_count: data.recipient_count || 0,
+        smtp_configured: !!data.smtp_configured,
+        sending: !!data.sending
+      });
+    } else {
+      showError(message);
+    }
+  };
+
   useEffect(() => {
     getOptions().then();
+    loadBroadcastMeta().then();
   }, []);
+
+  const handleBroadcastChange = (event) => {
+    const { name, value } = event.target;
+    setBroadcast((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const submitBroadcast = async (testOnly) => {
+    if (!broadcast.subject.trim() || !broadcast.content.trim()) {
+      showError('主题和正文不能为空');
+      return;
+    }
+    if (testOnly && !broadcast.test_email.trim()) {
+      showError('请先填写试发邮箱');
+      return;
+    }
+    if (
+      !testOnly &&
+      !window.confirm(`确认向 ${broadcastMeta.recipient_count} 个邮箱群发这封邮件？发送后无法撤回。`)
+    ) {
+      return;
+    }
+    setBroadcastLoading(true);
+    try {
+      const res = await API.post('/api/user/admin/broadcast-email', {
+        subject: broadcast.subject,
+        content: broadcast.content,
+        test_email: testOnly ? broadcast.test_email : ''
+      });
+      const { success, message, data } = res.data;
+      if (success) {
+        if (testOnly) {
+          showSuccess(message);
+        } else {
+          showSuccess(`已开始向 ${data?.recipient_count ?? broadcastMeta.recipient_count} 个邮箱发送`);
+          setBroadcastMeta((prev) => ({ ...prev, sending: true }));
+        }
+      } else {
+        showError(message);
+      }
+    } catch (err) {
+      showError(err.message || '请求失败');
+    } finally {
+      setBroadcastLoading(false);
+    }
+  };
 
   const updateOption = async (key, value) => {
     setLoading(true);
@@ -152,6 +223,87 @@ const OtherSetting = () => {
               <Button variant="contained" onClick={submitNotice}>
                 保存公告
               </Button>
+            </Grid>
+          </Grid>
+        </SubCard>
+        <SubCard title="群发邮件">
+          <Grid container spacing={{ xs: 3, sm: 2, md: 4 }}>
+            <Grid xs={12}>
+              <Alert severity="info">
+                将向所有未删除用户的真实邮箱逐封发送，自动跳过空邮箱和手机占位邮箱。请先在系统设置中配置 SMTP。
+                当前可发送 {broadcastMeta.recipient_count} 个邮箱。
+              </Alert>
+            </Grid>
+            {!broadcastMeta.smtp_configured && (
+              <Grid xs={12}>
+                <Alert severity="warning">尚未配置 SMTP，群发前请先填写邮件服务器。</Alert>
+              </Grid>
+            )}
+            {broadcastMeta.sending && (
+              <Grid xs={12}>
+                <Alert severity="warning">正在发送中，请稍候。</Alert>
+              </Grid>
+            )}
+            <Grid xs={12}>
+              <FormControl fullWidth>
+                <InputLabel htmlFor="broadcast-subject">邮件主题</InputLabel>
+                <OutlinedInput
+                  id="broadcast-subject"
+                  name="subject"
+                  value={broadcast.subject}
+                  onChange={handleBroadcastChange}
+                  label="邮件主题"
+                  placeholder="请输入邮件主题"
+                  disabled={broadcastLoading}
+                />
+              </FormControl>
+            </Grid>
+            <Grid xs={12}>
+              <FormControl fullWidth>
+                <TextField
+                  multiline
+                  maxRows={15}
+                  id="broadcast-content"
+                  label="邮件正文"
+                  value={broadcast.content}
+                  name="content"
+                  onChange={handleBroadcastChange}
+                  minRows={8}
+                  placeholder="支持 HTML，例如：<p>您好，这是一封系统通知。</p>"
+                  disabled={broadcastLoading}
+                />
+              </FormControl>
+            </Grid>
+            <Grid xs={12}>
+              <FormControl fullWidth>
+                <InputLabel htmlFor="broadcast-test-email">试发邮箱</InputLabel>
+                <OutlinedInput
+                  id="broadcast-test-email"
+                  name="test_email"
+                  value={broadcast.test_email}
+                  onChange={handleBroadcastChange}
+                  label="试发邮箱"
+                  placeholder="先发一封到自己的邮箱确认效果"
+                  disabled={broadcastLoading}
+                />
+              </FormControl>
+            </Grid>
+            <Grid xs={12}>
+              <Stack direction="row" spacing={2}>
+                <Button variant="outlined" onClick={loadBroadcastMeta} disabled={broadcastLoading}>
+                  刷新人数
+                </Button>
+                <Button variant="outlined" onClick={() => submitBroadcast(true)} disabled={broadcastLoading}>
+                  发送测试邮件
+                </Button>
+                <Button
+                  variant="contained"
+                  onClick={() => submitBroadcast(false)}
+                  disabled={broadcastLoading || broadcastMeta.sending}
+                >
+                  群发给所有用户
+                </Button>
+              </Stack>
             </Grid>
           </Grid>
         </SubCard>

@@ -25,6 +25,17 @@ const OtherSetting = () => {
     Theme: '',
   });
   let [loading, setLoading] = useState(false);
+  const [broadcast, setBroadcast] = useState({
+    subject: '',
+    content: '',
+    test_email: '',
+  });
+  const [broadcastMeta, setBroadcastMeta] = useState({
+    recipient_count: 0,
+    smtp_configured: false,
+    sending: false,
+  });
+  const [broadcastLoading, setBroadcastLoading] = useState(false);
   const [showUpdateModal, setShowUpdateModal] = useState(false);
   const [updateData, setUpdateData] = useState({
     tag_name: '',
@@ -47,9 +58,76 @@ const OtherSetting = () => {
     }
   };
 
+  const loadBroadcastMeta = async () => {
+    const res = await API.get('/api/user/admin/broadcast-email');
+    const { success, message, data } = res.data;
+    if (success) {
+      setBroadcastMeta({
+        recipient_count: data.recipient_count || 0,
+        smtp_configured: !!data.smtp_configured,
+        sending: !!data.sending,
+      });
+    } else {
+      showError(message);
+    }
+  };
+
   useEffect(() => {
     getOptions().then();
+    loadBroadcastMeta().then();
   }, []);
+
+  const handleBroadcastChange = (e, { name, value }) => {
+    setBroadcast((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const submitBroadcast = async (testOnly) => {
+    if (!broadcast.subject.trim() || !broadcast.content.trim()) {
+      showError(t('setting.other.broadcast.subject_placeholder'));
+      return;
+    }
+    if (testOnly && !broadcast.test_email.trim()) {
+      showError(t('setting.other.broadcast.test_email_placeholder'));
+      return;
+    }
+    if (
+      !testOnly &&
+      !window.confirm(
+        t('setting.other.broadcast.confirm', {
+          count: broadcastMeta.recipient_count,
+        })
+      )
+    ) {
+      return;
+    }
+    setBroadcastLoading(true);
+    try {
+      const res = await API.post('/api/user/admin/broadcast-email', {
+        subject: broadcast.subject,
+        content: broadcast.content,
+        test_email: testOnly ? broadcast.test_email : '',
+      });
+      const { success, message, data } = res.data;
+      if (success) {
+        if (testOnly) {
+          showSuccess(message);
+        } else {
+          showSuccess(
+            t('setting.other.broadcast.started', {
+              count: data?.recipient_count ?? broadcastMeta.recipient_count,
+            })
+          );
+          setBroadcastMeta((prev) => ({ ...prev, sending: true }));
+        }
+      } else {
+        showError(message);
+      }
+    } catch (err) {
+      showError(err.message || '请求失败');
+    } finally {
+      setBroadcastLoading(false);
+    }
+  };
 
   const updateOption = async (key, value) => {
     setLoading(true);
@@ -132,6 +210,83 @@ const OtherSetting = () => {
           <Form.Button onClick={submitNotice}>
             {t('setting.other.notice.buttons.save')}
           </Form.Button>
+
+          <Divider />
+          <Header as='h3'>{t('setting.other.broadcast.title')}</Header>
+          <Message>
+            {t('setting.other.broadcast.hint')}
+            <br />
+            {t('setting.other.broadcast.recipients', {
+              count: broadcastMeta.recipient_count,
+            })}
+            {!broadcastMeta.smtp_configured && (
+              <>
+                <br />
+                {t('setting.other.broadcast.smtp_missing')}
+              </>
+            )}
+            {broadcastMeta.sending && (
+              <>
+                <br />
+                {t('setting.other.broadcast.sending')}
+              </>
+            )}
+          </Message>
+          <Form.Group widths='equal'>
+            <Form.Input
+              label={t('setting.other.broadcast.subject')}
+              placeholder={t('setting.other.broadcast.subject_placeholder')}
+              value={broadcast.subject}
+              name='subject'
+              onChange={handleBroadcastChange}
+            />
+          </Form.Group>
+          <Form.Group widths='equal'>
+            <Form.TextArea
+              label={t('setting.other.broadcast.content')}
+              placeholder={t('setting.other.broadcast.content_placeholder')}
+              value={broadcast.content}
+              name='content'
+              onChange={handleBroadcastChange}
+              style={{ minHeight: 150, fontFamily: 'JetBrains Mono, Consolas' }}
+            />
+          </Form.Group>
+          <Form.Group widths='equal'>
+            <Form.Input
+              label={t('setting.other.broadcast.test_email')}
+              placeholder={t(
+                'setting.other.broadcast.test_email_placeholder'
+              )}
+              value={broadcast.test_email}
+              name='test_email'
+              onChange={handleBroadcastChange}
+            />
+          </Form.Group>
+          <Form.Group>
+            <Form.Button
+              type='button'
+              onClick={loadBroadcastMeta}
+              disabled={broadcastLoading}
+            >
+              {t('setting.other.broadcast.buttons.refresh')}
+            </Form.Button>
+            <Form.Button
+              type='button'
+              onClick={() => submitBroadcast(true)}
+              loading={broadcastLoading}
+            >
+              {t('setting.other.broadcast.buttons.test')}
+            </Form.Button>
+            <Form.Button
+              type='button'
+              primary
+              onClick={() => submitBroadcast(false)}
+              loading={broadcastLoading}
+              disabled={broadcastMeta.sending}
+            >
+              {t('setting.other.broadcast.buttons.send')}
+            </Form.Button>
+          </Form.Group>
 
           <Divider />
           <Header as='h3'>{t('setting.other.system.title')}</Header>

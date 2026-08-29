@@ -62,6 +62,23 @@ func GetMaxUserId() int {
 	return user.Id
 }
 
+// GetBroadcastableEmails returns distinct real emails of users who are not
+// deleted. Empty values and phone-placeholder addresses are excluded.
+func GetBroadcastableEmails() ([]string, error) {
+	domain := strings.TrimSpace(config.PhoneEmailDomain)
+	if domain == "" {
+		domain = "phone.local"
+	}
+	var emails []string
+	err := DB.Model(&User{}).
+		Where("status != ?", UserStatusDeleted).
+		Where("email != ''").
+		Where("email NOT LIKE ?", "%@"+domain).
+		Distinct("email").
+		Pluck("email", &emails).Error
+	return emails, err
+}
+
 func GetAllUsers(startIdx int, num int, order string) (users []*User, err error) {
 	query := DB.Limit(num).Offset(startIdx).Omit("password").Where("status != ?", UserStatusDeleted)
 

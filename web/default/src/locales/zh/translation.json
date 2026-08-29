@@ -701,6 +701,26 @@
           "save": "保存公告"
         }
       },
+      "broadcast": {
+        "title": "群发邮件",
+        "hint": "将向所有未删除用户的真实邮箱逐封发送，自动跳过空邮箱和手机占位邮箱。请先在系统设置中配置 SMTP。",
+        "recipients": "当前可发送 {{count}} 个邮箱",
+        "smtp_missing": "尚未配置 SMTP，群发前请先填写邮件服务器。",
+        "sending": "正在发送中，请稍候。",
+        "subject": "邮件主题",
+        "subject_placeholder": "请输入邮件主题",
+        "content": "邮件正文",
+        "content_placeholder": "支持 HTML，例如：<p>您好，这是一封系统通知。</p>",
+        "test_email": "试发邮箱",
+        "test_email_placeholder": "先发一封到自己的邮箱确认效果",
+        "confirm": "确认向 {{count}} 个邮箱群发这封邮件？发送后无法撤回。",
+        "started": "已开始向 {{count}} 个邮箱发送",
+        "buttons": {
+          "refresh": "刷新人数",
+          "test": "发送测试邮件",
+          "send": "群发给所有用户"
+        }
+      },
       "system": {
         "title": "系统设置",
         "name": "系统名称",

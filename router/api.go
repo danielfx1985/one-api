@@ -76,6 +76,8 @@ func SetApiRouter(router *gin.Engine) {
 				adminRoute.GET("/admin/dashboard", controller.GetAdminDashboard)
 			adminRoute.GET("/admin/token-ranking", controller.GetTokenUsageRanking)
 			adminRoute.GET("/admin/log-models", controller.GetLogModelNames)
+			adminRoute.GET("/admin/broadcast-email", controller.GetBroadcastEmailRecipients)
+			adminRoute.POST("/admin/broadcast-email", controller.BroadcastEmail)
 			}
 		}
 		optionRoute := apiRouter.Group("/option")

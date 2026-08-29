@@ -18,6 +18,11 @@ func shouldAuth() bool {
 	return config.SMTPAccount != "" || config.SMTPToken != ""
 }
 
+func SMTPConfigured() bool {
+	return strings.TrimSpace(config.SMTPServer) != "" &&
+		(strings.TrimSpace(config.SMTPAccount) != "" || strings.TrimSpace(config.SMTPFrom) != "")
+}
+
 func SendEmail(subject string, receiver string, content string) error {
 	if receiver == "" {
 		return fmt.Errorf("receiver is empty")
