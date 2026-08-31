@@ -3,6 +3,8 @@ import SubCard from 'ui-component/cards/SubCard';
 import {
     Stack,
     FormControl,
+    FormLabel,
+    FormControlLabel,
     InputLabel,
     OutlinedInput,
     Button,
@@ -12,7 +14,10 @@ import {
     DialogTitle,
     DialogActions,
     DialogContent,
-    Divider, Link
+    Divider,
+    Link,
+    Radio,
+    RadioGroup
 } from '@mui/material';
 import Grid from '@mui/material/Unstable_Grid2';
 import { showError, showSuccess } from 'utils/common'; //,
@@ -33,7 +38,10 @@ const OtherSetting = () => {
   const [broadcast, setBroadcast] = useState({
     subject: '',
     content: '',
-    test_email: ''
+    test_email: '',
+    id_ranges: '',
+    exclude_ids: '',
+    audience: 'all'
   });
   const [broadcastMeta, setBroadcastMeta] = useState({
     recipient_count: 0,
@@ -63,8 +71,16 @@ const OtherSetting = () => {
     }
   };
 
+  const broadcastFilterParams = () => ({
+    id_ranges: broadcast.id_ranges,
+    exclude_ids: broadcast.exclude_ids,
+    audience: broadcast.audience || 'all'
+  });
+
   const loadBroadcastMeta = async () => {
-    const res = await API.get('/api/user/admin/broadcast-email');
+    const res = await API.get('/api/user/admin/broadcast-email', {
+      params: broadcastFilterParams()
+    });
     const { success, message, data } = res.data;
     if (success) {
       setBroadcastMeta({
@@ -98,7 +114,7 @@ const OtherSetting = () => {
     }
     if (
       !testOnly &&
-      !window.confirm(`确认向 ${broadcastMeta.recipient_count} 个邮箱群发这封邮件？发送后无法撤回。`)
+      !window.confirm(`确认向当前筛选的 ${broadcastMeta.recipient_count} 个邮箱群发这封邮件？发送后无法撤回。`)
     ) {
       return;
     }
@@ -107,7 +123,8 @@ const OtherSetting = () => {
       const res = await API.post('/api/user/admin/broadcast-email', {
         subject: broadcast.subject,
         content: broadcast.content,
-        test_email: testOnly ? broadcast.test_email : ''
+        test_email: testOnly ? broadcast.test_email : '',
+        ...broadcastFilterParams()
       });
       const { success, message, data } = res.data;
       if (success) {
@@ -230,8 +247,8 @@ const OtherSetting = () => {
           <Grid container spacing={{ xs: 3, sm: 2, md: 4 }}>
             <Grid xs={12}>
               <Alert severity="info">
-                将向所有未删除用户的真实邮箱逐封发送，自动跳过空邮箱和手机占位邮箱。请先在系统设置中配置 SMTP。
-                当前可发送 {broadcastMeta.recipient_count} 个邮箱。
+                按下方筛选向未删除用户的真实邮箱逐封发送，自动跳过空邮箱和手机占位邮箱。号段与排除 ID 留空表示不限制。请先在系统设置中配置 SMTP。
+                当前筛选可发送 {broadcastMeta.recipient_count} 个邮箱。
               </Alert>
             </Grid>
             {!broadcastMeta.smtp_configured && (
@@ -244,6 +261,49 @@ const OtherSetting = () => {
                 <Alert severity="warning">正在发送中，请稍候。</Alert>
               </Grid>
             )}
+            <Grid xs={12} sm={6}>
+              <FormControl fullWidth>
+                <InputLabel htmlFor="broadcast-id-ranges">用户 ID 号段</InputLabel>
+                <OutlinedInput
+                  id="broadcast-id-ranges"
+                  name="id_ranges"
+                  value={broadcast.id_ranges}
+                  onChange={handleBroadcastChange}
+                  label="用户 ID 号段"
+                  placeholder="例如：1-100, 200-350；留空表示全部"
+                  disabled={broadcastLoading}
+                />
+              </FormControl>
+            </Grid>
+            <Grid xs={12} sm={6}>
+              <FormControl fullWidth>
+                <InputLabel htmlFor="broadcast-exclude-ids">排除 ID</InputLabel>
+                <OutlinedInput
+                  id="broadcast-exclude-ids"
+                  name="exclude_ids"
+                  value={broadcast.exclude_ids}
+                  onChange={handleBroadcastChange}
+                  label="排除 ID"
+                  placeholder="例如：15, 88, 201-210"
+                  disabled={broadcastLoading}
+                />
+              </FormControl>
+            </Grid>
+            <Grid xs={12}>
+              <FormControl>
+                <FormLabel>发送对象</FormLabel>
+                <RadioGroup
+                  row
+                  name="audience"
+                  value={broadcast.audience}
+                  onChange={handleBroadcastChange}
+                >
+                  <FormControlLabel value="all" control={<Radio />} label="全部用户" disabled={broadcastLoading} />
+                  <FormControlLabel value="vip" control={<Radio />} label="仅 VIP" disabled={broadcastLoading} />
+                  <FormControlLabel value="non_vip" control={<Radio />} label="仅非 VIP" disabled={broadcastLoading} />
+                </RadioGroup>
+              </FormControl>
+            </Grid>
             <Grid xs={12}>
               <FormControl fullWidth>
                 <InputLabel htmlFor="broadcast-subject">邮件主题</InputLabel>
@@ -301,7 +361,7 @@ const OtherSetting = () => {
                   onClick={() => submitBroadcast(false)}
                   disabled={broadcastLoading || broadcastMeta.sending}
                 >
-                  群发给所有用户
+                  按筛选群发
                 </Button>
               </Stack>
             </Grid>

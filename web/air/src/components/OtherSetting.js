@@ -18,7 +18,10 @@ const OtherSetting = () => {
   const [broadcast, setBroadcast] = useState({
     subject: '',
     content: '',
-    test_email: ''
+    test_email: '',
+    id_ranges: '',
+    exclude_ids: '',
+    audience: 'all'
   });
   const [broadcastMeta, setBroadcastMeta] = useState({
     recipient_count: 0,
@@ -48,8 +51,16 @@ const OtherSetting = () => {
     }
   };
 
+  const broadcastFilterParams = () => ({
+    id_ranges: broadcast.id_ranges,
+    exclude_ids: broadcast.exclude_ids,
+    audience: broadcast.audience || 'all'
+  });
+
   const loadBroadcastMeta = async () => {
-    const res = await API.get('/api/user/admin/broadcast-email');
+    const res = await API.get('/api/user/admin/broadcast-email', {
+      params: broadcastFilterParams()
+    });
     const { success, message, data } = res.data;
     if (success) {
       setBroadcastMeta({
@@ -83,7 +94,7 @@ const OtherSetting = () => {
     if (
       !testOnly &&
       !window.confirm(
-        `确认向 ${broadcastMeta.recipient_count} 个邮箱群发这封邮件？发送后无法撤回。`
+        `确认向当前筛选的 ${broadcastMeta.recipient_count} 个邮箱群发这封邮件？发送后无法撤回。`
       )
     ) {
       return;
@@ -93,7 +104,8 @@ const OtherSetting = () => {
       const res = await API.post('/api/user/admin/broadcast-email', {
         subject: broadcast.subject,
         content: broadcast.content,
-        test_email: testOnly ? broadcast.test_email : ''
+        test_email: testOnly ? broadcast.test_email : '',
+        ...broadcastFilterParams()
       });
       const { success, message, data } = res.data;
       if (success) {
@@ -201,9 +213,9 @@ const OtherSetting = () => {
           <Divider />
           <Header as='h3'>群发邮件</Header>
           <Message>
-            将向所有未删除用户的真实邮箱逐封发送，自动跳过空邮箱和手机占位邮箱。请先在系统设置中配置 SMTP。
+            按下方筛选向未删除用户的真实邮箱逐封发送，自动跳过空邮箱和手机占位邮箱。号段与排除 ID 留空表示不限制。请先在系统设置中配置 SMTP。
             <br />
-            当前可发送 {broadcastMeta.recipient_count} 个邮箱
+            当前筛选可发送 {broadcastMeta.recipient_count} 个邮箱
             {!broadcastMeta.smtp_configured && (
               <>
                 <br />
@@ -217,6 +229,46 @@ const OtherSetting = () => {
               </>
             )}
           </Message>
+          <Form.Group widths='equal'>
+            <Form.Input
+              label='用户 ID 号段'
+              placeholder='例如：1-100, 200-350；留空表示全部'
+              value={broadcast.id_ranges}
+              name='id_ranges'
+              onChange={handleBroadcastChange}
+            />
+            <Form.Input
+              label='排除 ID'
+              placeholder='例如：15, 88, 201-210'
+              value={broadcast.exclude_ids}
+              name='exclude_ids'
+              onChange={handleBroadcastChange}
+            />
+          </Form.Group>
+          <Form.Group inline>
+            <label>发送对象</label>
+            <Form.Radio
+              label='全部用户'
+              name='audience'
+              value='all'
+              checked={broadcast.audience === 'all'}
+              onChange={handleBroadcastChange}
+            />
+            <Form.Radio
+              label='仅 VIP'
+              name='audience'
+              value='vip'
+              checked={broadcast.audience === 'vip'}
+              onChange={handleBroadcastChange}
+            />
+            <Form.Radio
+              label='仅非 VIP'
+              name='audience'
+              value='non_vip'
+              checked={broadcast.audience === 'non_vip'}
+              onChange={handleBroadcastChange}
+            />
+          </Form.Group>
           <Form.Group widths='equal'>
             <Form.Input
               label='邮件主题'
@@ -259,7 +311,7 @@ const OtherSetting = () => {
               loading={broadcastLoading}
               disabled={broadcastMeta.sending}
             >
-              群发给所有用户
+              按筛选群发
             </Form.Button>
           </Form.Group>
           <Divider />

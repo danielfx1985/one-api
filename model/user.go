@@ -62,20 +62,65 @@ func GetMaxUserId() int {
 	return user.Id
 }
 
+// IDRange is an inclusive user-id interval used by broadcast email filters.
+type IDRange struct {
+	Start int
+	End   int
+}
+
+// BroadcastEmailFilter selects recipients for a broadcast. An empty filter
+// matches every non-deleted user with a real email (legacy behavior).
+type BroadcastEmailFilter struct {
+	IDRanges      []IDRange
+	ExcludeRanges []IDRange
+	Audience      string // "", "all", "vip", or "non_vip"
+}
+
+func userGroupColumn() string {
+	if common.UsingPostgreSQL {
+		return `"group"`
+	}
+	return "`group`"
+}
+
+func applyBroadcastIDRanges(query *gorm.DB, ranges []IDRange, include bool) *gorm.DB {
+	if len(ranges) == 0 {
+		return query
+	}
+	if include {
+		orQuery := DB.Where("id BETWEEN ? AND ?", ranges[0].Start, ranges[0].End)
+		for _, r := range ranges[1:] {
+			orQuery = orQuery.Or("id BETWEEN ? AND ?", r.Start, r.End)
+		}
+		return query.Where(orQuery)
+	}
+	for _, r := range ranges {
+		query = query.Where("id NOT BETWEEN ? AND ?", r.Start, r.End)
+	}
+	return query
+}
+
 // GetBroadcastableEmails returns distinct real emails of users who are not
 // deleted. Empty values and phone-placeholder addresses are excluded.
-func GetBroadcastableEmails() ([]string, error) {
+func GetBroadcastableEmails(filter BroadcastEmailFilter) ([]string, error) {
 	domain := strings.TrimSpace(config.PhoneEmailDomain)
 	if domain == "" {
 		domain = "phone.local"
 	}
-	var emails []string
-	err := DB.Model(&User{}).
+	query := DB.Model(&User{}).
 		Where("status != ?", UserStatusDeleted).
 		Where("email != ''").
-		Where("email NOT LIKE ?", "%@"+domain).
-		Distinct("email").
-		Pluck("email", &emails).Error
+		Where("email NOT LIKE ?", "%@"+domain)
+	query = applyBroadcastIDRanges(query, filter.IDRanges, true)
+	query = applyBroadcastIDRanges(query, filter.ExcludeRanges, false)
+	switch strings.TrimSpace(filter.Audience) {
+	case "vip":
+		query = query.Where(userGroupColumn()+" != ?", "default")
+	case "non_vip":
+		query = query.Where(userGroupColumn()+" = ?", "default")
+	}
+	var emails []string
+	err := query.Distinct("email").Pluck("email", &emails).Error
 	return emails, err
 }
 

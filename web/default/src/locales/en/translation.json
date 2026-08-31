@@ -705,22 +705,30 @@
       },
       "broadcast": {
         "title": "Broadcast Email",
-        "hint": "Sends one email to each non-deleted user with a real address. Empty emails and phone placeholder addresses are skipped. Configure SMTP in System Settings first.",
-        "recipients": "{{count}} recipients available",
+        "hint": "Sends one email to each matching non-deleted user with a real address. Empty emails and phone placeholder addresses are skipped. Leave ID ranges and exclusions blank to include everyone. Configure SMTP in System Settings first.",
+        "recipients": "{{count}} recipients match the current filters",
         "smtp_missing": "SMTP is not configured. Fill in the mail server settings first.",
         "sending": "A broadcast is already in progress.",
+        "id_ranges": "User ID ranges",
+        "id_ranges_placeholder": "e.g. 1-100, 200-350; leave blank for all",
+        "exclude_ids": "Exclude IDs",
+        "exclude_ids_placeholder": "e.g. 15, 88, 201-210",
+        "audience": "Audience",
+        "audience_all": "All users",
+        "audience_vip": "VIP only",
+        "audience_non_vip": "Non-VIP only",
         "subject": "Subject",
         "subject_placeholder": "Enter email subject",
         "content": "Body",
         "content_placeholder": "HTML is supported, e.g. <p>Hello, this is a system notice.</p>",
         "test_email": "Test recipient",
         "test_email_placeholder": "Send a preview to your own inbox first",
-        "confirm": "Send this email to {{count}} recipients? This cannot be undone.",
+        "confirm": "Send this email to the {{count}} recipients matching the current filters? This cannot be undone.",
         "started": "Started sending to {{count}} recipients",
         "buttons": {
           "refresh": "Refresh count",
           "test": "Send test email",
-          "send": "Broadcast to all users"
+          "send": "Broadcast to filtered users"
         }
       },
       "system": {

@@ -25,13 +25,24 @@ const (
 )
 
 type broadcastEmailRequest struct {
-	Subject   string `json:"subject"`
-	Content   string `json:"content"`
-	TestEmail string `json:"test_email"`
+	Subject    string `json:"subject"`
+	Content    string `json:"content"`
+	TestEmail  string `json:"test_email"`
+	IDRanges   string `json:"id_ranges"`
+	ExcludeIDs string `json:"exclude_ids"`
+	Audience   string `json:"audience"`
 }
 
 func GetBroadcastEmailRecipients(c *gin.Context) {
-	emails, err := model.GetBroadcastableEmails()
+	filter, err := parseBroadcastFilter(c.Query("id_ranges"), c.Query("exclude_ids"), c.Query("audience"))
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{
+			"success": false,
+			"message": err.Error(),
+		})
+		return
+	}
+	emails, err := model.GetBroadcastableEmails(filter)
 	if err != nil {
 		c.JSON(http.StatusOK, gin.H{
 			"success": false,
@@ -62,6 +73,9 @@ func BroadcastEmail(c *gin.Context) {
 	req.Subject = strings.TrimSpace(req.Subject)
 	req.Content = strings.TrimSpace(req.Content)
 	req.TestEmail = strings.TrimSpace(req.TestEmail)
+	req.IDRanges = strings.TrimSpace(req.IDRanges)
+	req.ExcludeIDs = strings.TrimSpace(req.ExcludeIDs)
+	req.Audience = strings.TrimSpace(req.Audience)
 	if req.Subject == "" || req.Content == "" {
 		c.JSON(http.StatusOK, gin.H{
 			"success": false,
@@ -115,7 +129,15 @@ func BroadcastEmail(c *gin.Context) {
 		return
 	}
 
-	emails, err := model.GetBroadcastableEmails()
+	filter, err := parseBroadcastFilter(req.IDRanges, req.ExcludeIDs, req.Audience)
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{
+			"success": false,
+			"message": err.Error(),
+		})
+		return
+	}
+	emails, err := model.GetBroadcastableEmails(filter)
 	if err != nil {
 		c.JSON(http.StatusOK, gin.H{
 			"success": false,
@@ -126,7 +148,7 @@ func BroadcastEmail(c *gin.Context) {
 	if len(emails) == 0 {
 		c.JSON(http.StatusOK, gin.H{
 			"success": false,
-			"message": "没有可发送的真实邮箱（已排除空邮箱、已删除用户和手机占位邮箱）",
+			"message": "当前筛选条件下没有可发送的真实邮箱（已排除空邮箱、已删除用户和手机占位邮箱）",
 		})
 		return
 	}

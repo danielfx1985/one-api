@@ -703,22 +703,30 @@
       },
       "broadcast": {
         "title": "群发邮件",
-        "hint": "将向所有未删除用户的真实邮箱逐封发送，自动跳过空邮箱和手机占位邮箱。请先在系统设置中配置 SMTP。",
-        "recipients": "当前可发送 {{count}} 个邮箱",
+        "hint": "按下方筛选向未删除用户的真实邮箱逐封发送，自动跳过空邮箱和手机占位邮箱。号段与排除 ID 留空表示不限制。请先在系统设置中配置 SMTP。",
+        "recipients": "当前筛选可发送 {{count}} 个邮箱",
         "smtp_missing": "尚未配置 SMTP，群发前请先填写邮件服务器。",
         "sending": "正在发送中，请稍候。",
+        "id_ranges": "用户 ID 号段",
+        "id_ranges_placeholder": "例如：1-100, 200-350；留空表示全部",
+        "exclude_ids": "排除 ID",
+        "exclude_ids_placeholder": "例如：15, 88, 201-210",
+        "audience": "发送对象",
+        "audience_all": "全部用户",
+        "audience_vip": "仅 VIP",
+        "audience_non_vip": "仅非 VIP",
         "subject": "邮件主题",
         "subject_placeholder": "请输入邮件主题",
         "content": "邮件正文",
         "content_placeholder": "支持 HTML，例如：<p>您好，这是一封系统通知。</p>",
         "test_email": "试发邮箱",
         "test_email_placeholder": "先发一封到自己的邮箱确认效果",
-        "confirm": "确认向 {{count}} 个邮箱群发这封邮件？发送后无法撤回。",
+        "confirm": "确认向当前筛选的 {{count}} 个邮箱群发这封邮件？发送后无法撤回。",
         "started": "已开始向 {{count}} 个邮箱发送",
         "buttons": {
           "refresh": "刷新人数",
           "test": "发送测试邮件",
-          "send": "群发给所有用户"
+          "send": "按筛选群发"
         }
       },
       "system": {

@@ -29,6 +29,9 @@ const OtherSetting = () => {
     subject: '',
     content: '',
     test_email: '',
+    id_ranges: '',
+    exclude_ids: '',
+    audience: 'all',
   });
   const [broadcastMeta, setBroadcastMeta] = useState({
     recipient_count: 0,
@@ -58,8 +61,16 @@ const OtherSetting = () => {
     }
   };
 
+  const broadcastFilterParams = () => ({
+    id_ranges: broadcast.id_ranges,
+    exclude_ids: broadcast.exclude_ids,
+    audience: broadcast.audience || 'all',
+  });
+
   const loadBroadcastMeta = async () => {
-    const res = await API.get('/api/user/admin/broadcast-email');
+    const res = await API.get('/api/user/admin/broadcast-email', {
+      params: broadcastFilterParams(),
+    });
     const { success, message, data } = res.data;
     if (success) {
       setBroadcastMeta({
@@ -106,6 +117,7 @@ const OtherSetting = () => {
         subject: broadcast.subject,
         content: broadcast.content,
         test_email: testOnly ? broadcast.test_email : '',
+        ...broadcastFilterParams(),
       });
       const { success, message, data } = res.data;
       if (success) {
@@ -232,6 +244,46 @@ const OtherSetting = () => {
               </>
             )}
           </Message>
+          <Form.Group widths='equal'>
+            <Form.Input
+              label={t('setting.other.broadcast.id_ranges')}
+              placeholder={t('setting.other.broadcast.id_ranges_placeholder')}
+              value={broadcast.id_ranges}
+              name='id_ranges'
+              onChange={handleBroadcastChange}
+            />
+            <Form.Input
+              label={t('setting.other.broadcast.exclude_ids')}
+              placeholder={t('setting.other.broadcast.exclude_ids_placeholder')}
+              value={broadcast.exclude_ids}
+              name='exclude_ids'
+              onChange={handleBroadcastChange}
+            />
+          </Form.Group>
+          <Form.Group inline>
+            <label>{t('setting.other.broadcast.audience')}</label>
+            <Form.Radio
+              label={t('setting.other.broadcast.audience_all')}
+              name='audience'
+              value='all'
+              checked={broadcast.audience === 'all'}
+              onChange={handleBroadcastChange}
+            />
+            <Form.Radio
+              label={t('setting.other.broadcast.audience_vip')}
+              name='audience'
+              value='vip'
+              checked={broadcast.audience === 'vip'}
+              onChange={handleBroadcastChange}
+            />
+            <Form.Radio
+              label={t('setting.other.broadcast.audience_non_vip')}
+              name='audience'
+              value='non_vip'
+              checked={broadcast.audience === 'non_vip'}
+              onChange={handleBroadcastChange}
+            />
+          </Form.Group>
           <Form.Group widths='equal'>
             <Form.Input
               label={t('setting.other.broadcast.subject')}
